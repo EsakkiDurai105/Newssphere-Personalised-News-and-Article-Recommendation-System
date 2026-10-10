@@ -37,13 +37,17 @@ def create_app(config_class=Config, mongo_client=None):
     app.register_blueprint(pages_bp)
     app.register_blueprint(api_bp)
 
-    if app.config["SEED_ON_EMPTY"] and get_db()[ARTICLES].estimated_document_count() == 0:
-        from services.seed_service import DEMO_ACCOUNTS, seed_database
+    if app.config["SEED_ON_EMPTY"]:
+        try:
+            if get_db()[ARTICLES].estimated_document_count() == 0:
+                from services.seed_service import DEMO_ACCOUNTS, seed_database
 
-        log.warning("Database is empty – seeding sample articles and demo accounts…")
-        seed_database()
-        log.warning("  admin: %s / %s", DEMO_ACCOUNTS["admin"]["email"], DEMO_ACCOUNTS["admin"]["password"])
-        log.warning("  demo : %s / %s", DEMO_ACCOUNTS["demo"]["email"], DEMO_ACCOUNTS["demo"]["password"])
+                log.warning("Database is empty – seeding sample articles and demo accounts…")
+                seed_database()
+                log.warning("  admin: %s / %s", DEMO_ACCOUNTS["admin"]["email"], DEMO_ACCOUNTS["admin"]["password"])
+                log.warning("  demo : %s / %s", DEMO_ACCOUNTS["demo"]["email"], DEMO_ACCOUNTS["demo"]["password"])
+        except Exception as exc:
+            log.warning("Could not check/seed database on startup: %s", exc)
 
     # ------------------------------------------------------------ template context
     @app.context_processor

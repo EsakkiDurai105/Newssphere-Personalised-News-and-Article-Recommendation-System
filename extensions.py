@@ -25,8 +25,11 @@ def init_db(uri=None, client=None):
             raise RuntimeError(
                 "MONGODB_URI is not set. Set MONGODB_URI in your .env or Vercel Environment Variables."
             )
-        client = MongoClient(uri, serverSelectionTimeoutMS=15000, appname="newssphere-flask")
-        client.admin.command("ping")  # fail fast with a clear error if Atlas is unreachable
+        client = MongoClient(uri, serverSelectionTimeoutMS=5000, appname="newssphere-flask")
+        try:
+            client.admin.command("ping")
+        except Exception as exc:
+            log.warning("MongoDB ping failed on init: %s", exc)
     _state["client"] = client
     try:
         db = client.get_default_database(default="newssphere")
