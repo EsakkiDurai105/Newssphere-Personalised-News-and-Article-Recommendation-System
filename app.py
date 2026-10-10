@@ -6,7 +6,7 @@
 import logging
 import os
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, render_template_string, request
 
 from config import Config
 from extensions import ARTICLES, get_db, init_db
@@ -64,6 +64,45 @@ def create_app(config_class=Config, mongo_client=None):
             "now_dt": __import__("datetime").datetime.utcnow(),
             "breaking": lambda: __import__("services.feed", fromlist=["breaking"]).breaking(),
         }
+
+    # ------------------------------------------------------------ configuration check
+    @app.before_request
+    def check_database_config():
+        if not config_class.MONGODB_URI and not request.path.startswith("/static/"):
+            return render_template_string("""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Required – NewsSphere</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; display: flex; justify-content: center; align-items: center; min-height: 85vh; margin: 0; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 2.5rem; max-width: 650px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+    h1 { color: #f43f5e; margin-top: 0; font-size: 1.5rem; }
+    p { line-height: 1.6; color: #94a3b8; }
+    code { background: #0f172a; color: #38bdf8; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9em; word-break: break-all; }
+    ol { color: #cbd5e1; padding-left: 1.2rem; line-height: 1.8; }
+    li { margin-bottom: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Database Connection Needed</h1>
+    <p>NewsSphere is deployed on Vercel, but <code>MONGODB_URI</code> is not yet configured in your Vercel Project Settings.</p>
+    <h3 style="color: #e2e8f0;">Quick 2-Step Fix:</h3>
+    <ol>
+      <li>Go to your <strong>Vercel Dashboard &rarr; Settings &rarr; Environment Variables</strong> and add:
+        <br><code>MONGODB_URI</code> = <code>mongodb+srv://24104105_db_user:esakki46@esakkiduraim.tiqwods.mongodb.net/newsphere</code>
+        <br><code>SECRET_KEY</code> = <code>6fda81ef0c3e33fb70eb9d857c4c51473acc74e527b144759eb1d1e5cf73d2a0</code>
+        <br><code>JWT_SECRET</code> = <code>37a54d5e2b479fba1f9cbf867f162839074fa928453239ff09e534b987d09e90</code>
+        <br><code>SEED_ON_EMPTY</code> = <code>true</code>
+      </li>
+      <li>In <strong>MongoDB Atlas &rarr; Network Access</strong>, ensure <code>0.0.0.0/0</code> is whitelisted so Vercel can connect.</li>
+    </ol>
+    <p>Once saved, click <strong>Redeploy</strong> in Vercel to launch the app!</p>
+  </div>
+</body>
+</html>"""), 503
 
     # ------------------------------------------------------------ security
     @app.before_request

@@ -22,9 +22,8 @@ def init_db(uri=None, client=None):
         return _state["db"]
     if client is None:
         if not uri:
-            raise RuntimeError(
-                "MONGODB_URI is not set. Set MONGODB_URI in your .env or Vercel Environment Variables."
-            )
+            log.warning("MONGODB_URI is not set. Database not initialized.")
+            return None
         client = MongoClient(uri, serverSelectionTimeoutMS=5000, appname="newssphere-flask")
         try:
             client.admin.command("ping")
@@ -42,7 +41,7 @@ def init_db(uri=None, client=None):
 
 def get_db():
     if _state["db"] is None:
-        raise RuntimeError("Database not initialised")
+        raise RuntimeError("Database not initialised. Set MONGODB_URI in your Vercel Environment Variables.")
     return _state["db"]
 
 
