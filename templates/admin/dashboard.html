@@ -1,0 +1,80 @@
+{% extends 'admin/base.html' %}
+{% block admin %}
+{%- set c = stats.counts %}
+{%- set max_views = ([1] + (stats.byCategory|map(attribute='views')|list))|max %}
+{%- set max_reads = ([1] + (days|map(attribute='reads')|list))|max %}
+<div class="mx-auto max-w-6xl">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-black">Overview</h1>
+      <p class="text-muted">How the newsroom and the readership are doing.</p>
+    </div>
+    <a href="/admin/articles?new=1" class="btn-primary">New article</a>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+    {%- for label, value, ic in [('Articles', c.articles, 'FileText'), ('Total views', c.views, 'Eye'), ('Users', c.users, 'Users'), ('Reads logged', c.reads, 'BookOpen'), ('Likes', c.likes, 'Heart'), ('Bookmarks', c.bookmarks, 'Bookmark'), ('Subscribers', c.subscribers, 'Mail')] %}
+    <div class="rounded-[6px] border border-line bg-paper p-5">
+      <div class="flex items-center justify-between text-muted"><span class="text-xs font-semibold uppercase tracking-wider">{{ label }}</span>{{ icon(ic, 'h-4 w-4') }}</div>
+      <div class="mt-2 font-display text-3xl font-black">{{ value|compact }}</div>
+    </div>
+    {%- endfor %}
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-5">
+    <section class="rounded-[6px] border border-line bg-paper p-6 lg:col-span-3">
+      <h2 class="font-sans text-sm font-bold uppercase tracking-wider">Views by category</h2>
+      <div class="mt-5 space-y-3">
+        {%- for x in stats.byCategory %}
+        <div class="grid grid-cols-[100px_1fr_70px] items-center gap-3 text-sm">
+          <span class="truncate font-medium">{{ x._id|cat_label }}</span>
+          <div class="h-2.5 overflow-hidden rounded-full bg-soft"><div class="h-full rounded-full bg-accent transition-all duration-700" style="width: {{ (x.views / max_views * 100)|round(2) }}%"></div></div>
+          <span class="text-right text-xs text-muted">{{ x.views|compact }} · {{ x.articles }}</span>
+        </div>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <section class="rounded-[6px] border border-line bg-paper p-6 lg:col-span-2">
+      <h2 class="font-sans text-sm font-bold uppercase tracking-wider">Reads · last 7 days</h2>
+      <div class="mt-6 flex h-40 items-end gap-2">
+        {%- for d in days %}
+        <div class="flex flex-1 flex-col items-center gap-2">
+          <span class="text-[10px] text-muted">{{ d.reads or '' }}</span>
+          <div class="flex w-full flex-1 items-end"><div class="w-full rounded-t-[3px] bg-ink/80 transition-all duration-700 dark:bg-paper/70" style="height: {{ [4, (d.reads / max_reads * 100)]|max|round(2) }}%"></div></div>
+          <span class="text-[10px] text-muted">{{ d.label }}</span>
+        </div>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <section class="rounded-[6px] border border-line bg-paper p-6 lg:col-span-3">
+      <h2 class="font-sans text-sm font-bold uppercase tracking-wider">Top articles</h2>
+      <ol class="mt-4 divide-y divide-line">
+        {%- for a in stats.topArticles %}
+        <li class="flex items-center gap-4 py-3">
+          <span class="w-6 font-display text-xl font-black text-accent">{{ loop.index }}</span>
+          <a href="/article/{{ a._id }}" class="min-w-0 flex-1 truncate text-sm font-semibold hover:text-accent">{{ a.title }}</a>
+          <span class="whitespace-nowrap text-xs text-muted">{{ a.views|compact }} views · {{ a.likes|compact }} likes</span>
+        </li>
+        {%- endfor %}
+      </ol>
+    </section>
+
+    <section class="rounded-[6px] border border-line bg-paper p-6 lg:col-span-2">
+      <div class="flex items-center justify-between">
+        <h2 class="font-sans text-sm font-bold uppercase tracking-wider">New users</h2>
+        <a href="/admin/users" class="text-xs font-semibold text-accent">All users</a>
+      </div>
+      <ul class="mt-4 divide-y divide-line">
+        {%- for u in stats.recentUsers %}
+        <li class="py-3 text-sm">
+          <div class="flex items-center justify-between gap-2"><span class="truncate font-semibold">{{ u.name }}</span><span class="text-xs text-muted">{{ u.createdAt|time_ago }}</span></div>
+          <div class="truncate text-xs text-muted">{{ u.email }}</div>
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

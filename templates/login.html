@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% from 'components/auth_shell.html' import auth_shell with context %}
+{% block content %}
+{% call auth_shell('Welcome back', 'Sign in to see your personalised feed, saved stories and reading history.') %}
+<form data-auth-form="login" data-next="{{ next }}" class="space-y-5" novalidate>
+  <div>
+    <label class="label" for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email" class="input" required />
+  </div>
+  <div>
+    <label class="label" for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" class="input" required />
+  </div>
+  <p role="alert" data-form-error hidden class="rounded-sm bg-accent/10 px-3 py-2 text-sm font-medium text-accent"></p>
+  <button class="btn-primary w-full !py-3" data-submit><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Sign in</button>
+</form>
+<p class="mt-6 text-center text-sm text-muted">New to NewsSphere? <a href="/register{{ ('?next=' ~ next|urlencode) if next != '/' else '' }}" class="font-semibold text-accent hover:underline">Create an account</a></p>
+<div class="mt-6 rounded-sm border border-dashed border-line p-3 text-xs text-muted">
+  <strong class="text-ink">Demo accounts</strong> (after seeding)<br />
+  Reader: demo@newssphere.com / Demo@12345<br />
+  Admin: admin@newssphere.com / Admin@12345
+</div>
+{% endcall %}
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import search_result_card with context %}
+{% from 'components/misc.html' import empty_state with context %}
+{% block content %}
+<div class="container-x py-10" data-search-page>
+  <h1 class="text-4xl font-black sm:text-5xl">Search</h1>
+
+  <form action="/search" method="get" data-search-page-form class="mt-6 flex items-center gap-3 border-b-2 border-ink pb-3">
+    {{ icon('Search', 'h-6 w-6 text-muted') }}
+    <input autofocus name="q" value="{{ q }}" autocomplete="off" placeholder="Search by title, topic, source or keyword…" class="flex-1 bg-transparent font-display text-2xl outline-none placeholder:text-muted/60 sm:text-3xl" aria-label="Search articles" data-search-page-input />
+    {%- if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+    {%- if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
+    {%- if request.args.get('sort') %}<input type="hidden" name="sort" value="{{ request.args.get('sort') }}">{% endif %}
+    <a href="{{ su(q='') }}" data-clear-search class="rounded-full p-2 text-muted hover:bg-soft {{ '' if q else 'hidden' }}" aria-label="Clear search">{{ icon('X', 'h-5 w-5') }}</a>
+  </form>
+
+  <div data-search-region>
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-muted" aria-live="polite">
+        <strong class="text-ink">{{ data.total }}</strong> {{ 'result' if data.total == 1 else 'results' }}
+        {%- if q %} for “<span class="font-semibold text-ink">{{ q }}</span>”{% endif %}
+        {%- if category %} in {{ category|cat_label }}{% endif %}
+      </p>
+      <div class="flex items-center gap-3">
+        <button type="button" class="btn-ghost !py-2 lg:hidden" data-filters-toggle>{{ icon('SlidersHorizontal', 'h-4 w-4') }} Filters {{ '•' if (category or source) else '' }}</button>
+        <label class="flex items-center gap-2 text-sm">
+          <span class="hidden font-semibold text-muted sm:inline">Sort by</span>
+          <select data-nav-select class="input !w-auto !py-2" aria-label="Sort by">
+            {%- for v, label in [('relevance', 'Relevance'), ('latest', 'Latest'), ('popular', 'Most popular')] if v != 'relevance' or q %}
+            <option value="{{ su(sort=v) }}" {{ 'selected' if sort == v }}>{{ label }}</option>
+            {%- endfor %}
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="mt-8 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside class="hidden lg:block" data-filters>
+        <div class="lg:sticky lg:top-36">
+          <div class="space-y-7">
+            <div>
+              <div class="kicker mb-3">Section</div>
+              <div class="space-y-1">
+                <a href="{{ su(category='') }}" class="flex w-full items-center justify-between rounded-sm px-3 py-2 text-sm {{ 'hover:bg-soft' if category else 'bg-ink font-semibold text-paper' }}">All sections</a>
+                {%- for c in categories %}
+                {%- set count = (data.facets|selectattr('_id', 'equalto', c.slug)|map(attribute='count')|first) if data.facets else none %}
+                <a href="{{ su(category=c.slug) }}" class="flex w-full items-center justify-between rounded-sm px-3 py-2 text-sm {{ 'bg-ink font-semibold text-paper' if category == c.slug else 'hover:bg-soft' }}">{{ c.label }}{% if count %}<span class="text-xs opacity-60">{{ count }}</span>{% endif %}</a>
+                {%- endfor %}
+              </div>
+            </div>
+            <div>
+              <div class="kicker mb-3">Source</div>
+              <select data-nav-select class="input" aria-label="Source">
+                <option value="{{ su(source='') }}">All sources</option>
+                {%- for s in sources %}<option value="{{ su(source=s) }}" {{ 'selected' if source == s }}>{{ s }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section>
+        {%- if not data.articles %}
+        {{ empty_state('No articles found', (('Nothing matched “' ~ q ~ '”. Check the spelling or try broader keywords.') if q else 'No stories match these filters.'), icon_name='SearchX', action_to=(None if (category or source) else '/latest'), action_label='Browse latest news') }}
+        {%- else %}
+        <div>
+          {%- for a in data.articles %}{{ search_result_card(a, index=loop.index0, terms=terms) }}{% endfor %}
+          {%- if data.pages > 1 %}
+          <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+            {%- if page <= 1 %}<span class="btn-ghost !px-3 opacity-60" aria-label="Previous page" aria-disabled="true">{{ icon('ChevronLeft', 'h-4 w-4') }}</span>
+            {%- else %}<a href="{{ su(page=(page - 1)) }}" class="btn-ghost !px-3" aria-label="Previous page">{{ icon('ChevronLeft', 'h-4 w-4') }}</a>{% endif %}
+            {%- for n in range(1, data.pages + 1) %}
+            <a href="{{ su(page=n) }}" class="grid h-10 w-10 place-items-center rounded-sm text-sm font-semibold {{ 'bg-ink text-paper' if page == n else 'border border-line hover:bg-soft' }}" {% if page == n %}aria-current="page"{% endif %}>{{ n }}</a>
+            {%- endfor %}
+            {%- if page >= data.pages %}<span class="btn-ghost !px-3 opacity-60" aria-label="Next page" aria-disabled="true">{{ icon('ChevronRight', 'h-4 w-4') }}</span>
+            {%- else %}<a href="{{ su(page=(page + 1)) }}" class="btn-ghost !px-3" aria-label="Next page">{{ icon('ChevronRight', 'h-4 w-4') }}</a>{% endif %}
+          </nav>
+          {%- endif %}
+        </div>
+        {%- endif %}
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

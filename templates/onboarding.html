@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from 'components/misc.html' import interest_picker with context %}
+{% block content %}
+<div class="container-x max-w-4xl py-14 text-center sm:py-20" data-onboarding>
+  <div class="fade-up">
+    <div class="kicker">Welcome, {{ user.name.split(' ')[0] }}</div>
+    <h1 class="mt-3 text-4xl font-black leading-tight sm:text-6xl">What topics are you interested in?</h1>
+    <p class="mx-auto mt-4 max-w-xl text-lg text-muted">Select as many as you like. We use these to rank your feed — and refine it as you read, like and save stories.</p>
+  </div>
+  <div class="mt-10 text-left">{{ interest_picker(user.interests or [], large=true) }}</div>
+  <p role="alert" data-onb-error hidden class="mt-5 text-sm font-semibold text-accent"></p>
+  <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+    <button type="button" data-onb-save class="btn-primary min-w-[240px] !py-3.5 text-base"><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span><span data-onb-label>Continue</span></button>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,2 @@
+{% from 'components/cards.html' import story_card with context %}
+{%- for a in data.articles %}{{ story_card(a, index=loop.index0 % 6) }}{% endfor -%}

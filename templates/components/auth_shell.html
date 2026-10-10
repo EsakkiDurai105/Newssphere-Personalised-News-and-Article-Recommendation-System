@@ -1,0 +1,24 @@
+{% from 'components/misc.html' import logo with context %}
+{% macro auth_shell(title, subtitle) -%}
+<div class="grid min-h-[calc(100vh-10rem)] lg:grid-cols-2">
+  <div class="relative hidden overflow-hidden bg-ink text-paper lg:block">
+    <img src="https://picsum.photos/seed/newssphere-auth/1000/1200" alt="" class="absolute inset-0 h-full w-full object-cover opacity-40" onerror="this.style.display='none'">
+    <div class="absolute inset-0 bg-gradient-to-br from-accent/60 via-ink/70 to-ink"></div>
+    <div class="relative flex h-full flex-col justify-between p-14">
+      {{ logo(light=true) }}
+      <div>
+        <p class="font-display text-5xl font-black leading-[1.05]">The news that matters, picked for you.</p>
+        <p class="mt-5 max-w-md text-lg text-paper/80">Tell us what you care about. We'll learn from what you read, like and save — using simple, transparent rules.</p>
+      </div>
+      <div class="text-sm text-paper/60">Personalised · Transparent · Ad-light</div>
+    </div>
+  </div>
+  <div class="grid place-items-center px-4 py-12 sm:px-8">
+    <div class="fade-up w-full max-w-md">
+      <h1 class="text-4xl font-black">{{ title }}</h1>
+      <p class="mb-8 mt-2 text-muted">{{ subtitle }}</p>
+      {{ caller() }}
+    </div>
+  </div>
+</div>
+{%- endmacro %}

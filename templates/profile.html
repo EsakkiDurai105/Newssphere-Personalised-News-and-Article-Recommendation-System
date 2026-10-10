@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import compact_card with context %}
+{% from 'components/misc.html' import avatar, section_header, interest_picker, empty_state with context %}
+{% block content %}
+<div class="container-x py-10 sm:py-14" data-profile data-interests='{{ (user.interests or [])|tojson|forceescape }}'>
+  <div class="flex flex-col items-start gap-6 border-b border-line pb-10 sm:flex-row sm:items-center">
+    {{ avatar(user, 'h-24 w-24', 'text-3xl') }}
+    <div class="flex-1">
+      <h1 class="text-4xl font-black">{{ user.name }}</h1>
+      <p class="text-muted">{{ user.email }}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {%- for i in (user.interests or []) %}<a href="/category/{{ i }}" class="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{{ i|cat_label }}</a>{% endfor %}
+        {%- if user.role == 'admin' %}<a href="/admin" class="rounded-full bg-ink px-3 py-1 text-xs font-bold text-paper">Admin</a>{% endif %}
+      </div>
+    </div>
+    <div class="grid w-full grid-cols-3 gap-3 sm:w-auto">
+      {%- for label, n, ic in [('Read', stats.reads, 'BookOpen'), ('Saved', stats.bookmarks, 'Bookmark'), ('Liked', stats.likes, 'Heart')] %}
+      <div class="min-w-[90px] rounded-[4px] border border-line px-4 py-3 text-center">
+        {{ icon(ic, 'mx-auto mb-1 h-4 w-4 text-accent') }}
+        <div class="font-display text-2xl font-black">{{ n }}</div>
+        <div class="text-xs text-muted">{{ label }}</div>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+
+  <div class="mt-10 grid gap-12 lg:grid-cols-12">
+    <div class="lg:col-span-7">
+      {{ section_header('Your interests', subtitle='These weigh most heavily in your For You feed.', heavy=false) }}
+      {{ interest_picker(user.interests or []) }}
+      <div class="mt-5 flex items-center gap-3">
+        <button type="button" data-save-interests disabled class="btn-primary"><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Save interests</button>
+        <span data-dirty hidden class="text-sm text-muted">Unsaved changes</span>
+      </div>
+
+      <div class="mt-14" data-tabs>
+        <div class="mb-5 flex gap-1 border-b border-line">
+          {%- for id, label, ic in [('history', 'Reading history', 'History'), ('saved', 'Saved', 'Bookmark'), ('liked', 'Liked', 'Heart')] %}
+          <button type="button" data-tab="{{ id }}" class="-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition {{ 'border-accent text-accent' if loop.first else 'border-transparent text-muted hover:text-ink' }}">{{ icon(ic, 'h-4 w-4') }} {{ label }}</button>
+          {%- endfor %}
+        </div>
+
+        <div data-panel="history">
+          {%- if not history.history %}{{ empty_state('No reading history yet', 'Stories you interact with will show up here.', action_to='/latest', action_label='Start reading') }}
+          {%- else %}
+          {%- for h in history.history %}
+          <div><div class="pt-2 text-xs font-semibold text-muted">Read {{ h.readAt|time_ago }}</div>{{ compact_card(h.article, thumb=true) }}</div>
+          {%- endfor %}
+          <a href="/history" class="mt-4 inline-block text-sm font-semibold text-accent hover:underline">View all →</a>
+          {%- endif %}
+        </div>
+        <div data-panel="saved" hidden>
+          {%- if not saved.articles %}{{ empty_state('No bookmarks yet', 'Stories you interact with will show up here.', icon_name='Bookmark', action_to='/latest', action_label='Start reading') }}
+          {%- else %}
+          {%- for a in saved.articles %}{{ compact_card(a, thumb=true) }}{% endfor %}
+          <a href="/bookmarks" class="mt-4 inline-block text-sm font-semibold text-accent hover:underline">View all →</a>
+          {%- endif %}
+        </div>
+        <div data-panel="liked" hidden>
+          {%- if not liked.articles %}{{ empty_state('No liked articles yet', 'Stories you interact with will show up here.', action_to='/latest', action_label='Start reading') }}
+          {%- else %}
+          {%- for a in liked.articles %}{{ compact_card(a, thumb=true) }}{% endfor %}
+          <a href="/for-you" class="mt-4 inline-block text-sm font-semibold text-accent hover:underline">Find more to like →</a>
+          {%- endif %}
+        </div>
+      </div>
+    </div>
+
+    <aside class="lg:col-span-5">
+      {{ section_header('Account', heavy=false) }}
+      <form data-profile-form class="space-y-4" novalidate>
+        <div>
+          <label class="label" for="pname">Name</label>
+          <input id="pname" name="name" class="input" value="{{ user.name }}" />
+          <p class="mt-1 hidden text-xs font-medium text-accent" data-err="name"></p>
+        </div>
+        <div>
+          <label class="label" for="pemail">Email</label>
+          <input id="pemail" class="input opacity-70" value="{{ user.email }}" disabled />
+        </div>
+        <div>
+          <label class="label" for="pavatar">Avatar image URL (optional)</label>
+          <input id="pavatar" name="avatar" class="input" placeholder="https://…" value="{{ user.avatar or '' }}" />
+        </div>
+        <div class="rounded-[4px] border border-line p-4">
+          <div class="kicker mb-3">Change password</div>
+          <div class="space-y-3">
+            <input type="password" name="currentPassword" autocomplete="current-password" placeholder="Current password" class="input" />
+            <p class="hidden text-xs font-medium text-accent" data-err="currentPassword"></p>
+            <input type="password" name="newPassword" autocomplete="new-password" placeholder="New password (8+ chars, letter & number)" class="input" />
+            <p class="hidden text-xs font-medium text-accent" data-err="newPassword"></p>
+          </div>
+        </div>
+        <p role="alert" data-form-error hidden class="text-sm font-medium text-accent"></p>
+        <button class="btn-ghost w-full" data-submit><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Save account details</button>
+      </form>
+    </aside>
+  </div>
+</div>
+{% endblock %}

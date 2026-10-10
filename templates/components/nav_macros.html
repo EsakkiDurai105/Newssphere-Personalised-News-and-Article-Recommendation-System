@@ -1,0 +1,3 @@
+{% macro nav_active(path, to, end=false) -%}
+{{ 'true' if (path == to if end else (path == to or path.startswith(to ~ '/'))) else 'false' }}
+{%- endmacro %}

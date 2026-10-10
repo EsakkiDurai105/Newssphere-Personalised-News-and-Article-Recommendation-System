@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import smart_image, cat_tag, bookmark_btn, like_btn, story_card, recommendation_card with context %}
+{% from 'components/misc.html' import section_header with context %}
+{% block head %}
+<meta property="og:title" content="{{ article.title }}" />
+<meta property="og:description" content="{{ article.description }}" />
+{% if article.image %}<meta property="og:image" content="{{ article.image }}" />{% endif %}
+{% endblock %}
+
+{% macro share_bar(title) %}
+<div class="flex items-center gap-2" aria-label="Share this article" data-share data-title="{{ title }}">
+  {%- set btn = 'grid h-10 w-10 place-items-center rounded-full border border-line text-sm font-bold transition hover:border-accent hover:bg-accent hover:text-white' %}
+  <span class="mr-1 hidden text-xs font-bold uppercase tracking-wider text-muted sm:inline">Share</span>
+  <a class="{{ btn }}" target="_blank" rel="noreferrer" aria-label="Share on X" data-share-x href="#">𝕏</a>
+  <a class="{{ btn }}" target="_blank" rel="noreferrer" aria-label="Share on Facebook" data-share-fb href="#">f</a>
+  <a class="{{ btn }}" target="_blank" rel="noreferrer" aria-label="Share on LinkedIn" data-share-in href="#">in</a>
+  <a class="{{ btn }}" aria-label="Share by email" data-share-mail href="#">{{ icon('Mail', 'h-4 w-4') }}</a>
+  <button type="button" class="{{ btn }}" data-share-copy aria-label="Copy link"><span data-copy-icon>{{ icon('Link2', 'h-4 w-4') }}</span><span data-copied-icon hidden>{{ icon('Check', 'h-4 w-4') }}</span></button>
+  <button type="button" class="{{ btn }} sm:hidden" data-share-native aria-label="Share">{{ icon('Share2', 'h-4 w-4') }}</button>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="progress-bar fixed inset-x-0 top-0 z-[55] h-[3px] origin-left bg-accent" data-progress style="transform:scaleX(0)"></div>
+
+<article>
+  <header class="container-x max-w-[820px] pt-10 text-center sm:pt-14">
+    {{ cat_tag(article.category) }}
+    <h1 class="fade-up mt-4 text-[2rem] font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">{{ article.title }}</h1>
+    {%- if article.subtitle %}<p class="mx-auto mt-5 max-w-2xl font-serif text-xl italic leading-snug text-muted sm:text-2xl">{{ article.subtitle }}</p>{% endif %}
+
+    <div class="mt-7 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-y border-line py-3 text-sm text-muted">
+      <span>By <strong class="text-ink">{{ article.author }}</strong></span>
+      <span class="hidden sm:inline">·</span>
+      <span class="font-semibold text-ink/80">{{ article.source }}</span>
+      <span class="hidden sm:inline">·</span>
+      <time datetime="{{ article.publishedAt|iso_z }}" data-datetime="{{ article.publishedAt|iso_z }}">{{ article.publishedAt|format_date }}, {{ article.publishedAt|format_time }}</time>
+      <span class="hidden sm:inline">·</span>
+      <span class="inline-flex items-center gap-1">{{ icon('Clock', 'h-3.5 w-3.5') }} {{ article.readingTime }} min read</span>
+      <span class="inline-flex items-center gap-1">{{ icon('Eye', 'h-3.5 w-3.5') }} {{ article.views|compact }}</span>
+    </div>
+  </header>
+
+  <div class="container-x mt-8 max-w-[1080px]">
+    <div class="overflow-hidden rounded-[3px]">{{ smart_image(article.image, article.title, 'aspect-[16/9]', zoom=false, eager=true) }}</div>
+    <p class="mt-2 text-right text-xs text-muted">Photo: {{ article.source }}</p>
+  </div>
+
+  <div class="container-x mt-8 grid max-w-[1080px] gap-10 lg:grid-cols-[72px_minmax(0,1fr)_72px]">
+    <aside class="hidden lg:block">
+      <div class="sticky top-32 flex flex-col items-center gap-3">{{ bookmark_btn(article._id, overlay=true, cls='!border !border-line !shadow-none') }}</div>
+    </aside>
+
+    <div class="mx-auto w-full max-w-[720px]">
+      <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          {{ like_btn(article._id, article.likes) }}
+          {{ bookmark_btn(article._id, label=true) }}
+        </div>
+        {{ share_bar(article.title) }}
+      </div>
+
+      <p class="mb-8 border-l-4 border-accent pl-5 font-serif text-xl font-semibold leading-relaxed">{{ article.description }}</p>
+
+      <div class="prose-article">
+        {%- for p in (article.content or '').split('\n\n') if p.strip() %}<p>{{ p.strip() }}</p>{% endfor %}
+      </div>
+
+      {%- if article.tags %}
+      <div class="mt-10 flex flex-wrap gap-2 border-t border-line pt-6">
+        {%- for t in article.tags %}<a href="/search?q={{ t|urlencode }}" class="rounded-full border border-line px-3.5 py-1.5 text-sm text-muted hover:border-accent hover:text-accent">#{{ t }}</a>{% endfor %}
+      </div>
+      {%- endif %}
+
+      <div class="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[4px] bg-soft p-5">
+        <div>
+          <div class="font-bold">Enjoyed this story?</div>
+          <div class="text-sm text-muted">Like or save it — your feed will learn from it.</div>
+        </div>
+        <div class="flex items-center gap-3">
+          {{ like_btn(article._id, article.likes) }}
+          {{ bookmark_btn(article._id, label=true) }}
+        </div>
+      </div>
+    </div>
+    <div class="hidden lg:block"></div>
+  </div>
+</article>
+
+{# ---------- RELATED ---------- #}
+<section class="container-x mt-20">
+  {{ section_header('More in ' ~ (article.category|cat_label), kicker='Related', to='/category/' ~ article.category) }}
+  {%- if related %}
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    {%- for a in related %}{{ story_card(a, index=loop.index0) }}{% endfor %}
+  </div>
+  {%- else %}<p class="text-muted">No related stories yet.</p>{% endif %}
+</section>
+
+{# ---------- YOU MAY ALSO LIKE ---------- #}
+<section class="mt-16 bg-soft py-14">
+  <div class="container-x">
+    {{ section_header('You may also like', kicker=('Picked for you' if recs and recs.personalized else 'Popular picks'), subtitle="Recommended by your interests, reading history and what's trending.") }}
+    <div class="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for a in (recs.articles if recs else [])[:6] %}{{ recommendation_card(a, index=loop.index0, large=true) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

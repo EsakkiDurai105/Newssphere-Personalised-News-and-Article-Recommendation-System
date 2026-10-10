@@ -1,0 +1,113 @@
+{% extends 'admin/base.html' %}
+{% from 'components/misc.html' import empty_state with context %}
+{% block admin %}
+<div class="mx-auto max-w-6xl" data-admin-articles data-open-new="{{ 'true' if open_new else 'false' }}">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-black">Articles</h1>
+      <p class="text-muted">{{ data.total }} stories</p>
+    </div>
+    <div class="flex gap-2">
+      <button type="button" data-import class="btn-ghost" title="Pull stories from NewsAPI / RSS configured on the server"><span data-import-icon>{{ icon('CloudDownload', 'h-4 w-4') }}</span><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Import news</button>
+      <button type="button" data-new-article class="btn-primary">{{ icon('Plus', 'h-4 w-4') }} New article</button>
+    </div>
+  </div>
+
+  <form action="/admin/articles" method="get" class="mb-4 flex flex-wrap gap-3" data-admin-search>
+    <div class="relative min-w-[220px] flex-1">
+      {{ icon('Search', 'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted') }}
+      <input name="q" value="{{ q }}" placeholder="Search title, source or tag…" class="input !pl-9" autocomplete="off" />
+    </div>
+    <select name="category" class="input !w-auto" data-autosubmit>
+      <option value="">All categories</option>
+      {%- for c in categories %}<option value="{{ c.slug }}" {{ 'selected' if category == c.slug }}>{{ c.label }}</option>{% endfor %}
+    </select>
+  </form>
+
+  <div class="overflow-x-auto rounded-[6px] border border-line bg-paper">
+    <table class="w-full min-w-[760px] text-left text-sm">
+      <thead class="border-b border-line bg-soft text-xs uppercase tracking-wider text-muted">
+        <tr><th class="px-4 py-3">Headline</th><th class="px-4 py-3">Category</th><th class="px-4 py-3">Published</th><th class="px-4 py-3 text-right">Views</th><th class="px-4 py-3 text-right">Likes</th><th class="px-4 py-3 text-right">Actions</th></tr>
+      </thead>
+      <tbody class="divide-y divide-line">
+        {%- for a in data.articles %}
+        <tr class="hover:bg-soft/60" data-article-row="{{ a._id }}" data-title="{{ a.title }}">
+          <td class="max-w-md px-4 py-3">
+            <a href="/article/{{ a._id }}" class="line-clamp-2 font-semibold hover:text-accent">{{ a.title }}</a>
+            <div class="mt-1 flex gap-1.5 text-[10px] font-bold uppercase">
+              {%- if a.isFeatured %}<span class="rounded bg-accent/15 px-1.5 py-0.5 text-accent">Featured</span>{% endif %}
+              {%- if a.isBreaking %}<span class="rounded bg-ink px-1.5 py-0.5 text-paper">Breaking</span>{% endif %}
+              <span class="font-medium normal-case text-muted">{{ a.source }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">{{ a.category|cat_label }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-muted">{{ a.publishedAt|time_ago }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ a.views|compact }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ a.likes|compact }}</td>
+          <td class="px-4 py-3">
+            <div class="flex justify-end gap-1">
+              <button type="button" data-edit-article class="rounded-full p-2 hover:bg-soft" aria-label="Edit">{{ icon('Pencil', 'h-4 w-4') }}</button>
+              <button type="button" data-delete-article class="rounded-full p-2 text-accent hover:bg-accent/10" aria-label="Delete">{{ icon('Trash2', 'h-4 w-4') }}</button>
+            </div>
+          </td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+    {%- if not data.articles %}{{ empty_state('No articles found', 'Try a different search or filter.', icon_name='SearchX') }}{% endif %}
+  </div>
+
+  {%- if data.pages > 1 %}
+  <div class="mt-5 flex items-center justify-between text-sm">
+    <span class="text-muted">Page {{ page }} of {{ data.pages }}</span>
+    <div class="flex gap-2">
+      {%- if page <= 1 %}<span class="btn-ghost !py-2 opacity-60">Previous</span>{% else %}<a class="btn-ghost !py-2" href="/admin/articles?q={{ q|urlencode }}&category={{ category }}&page={{ page - 1 }}">Previous</a>{% endif %}
+      {%- if page >= data.pages %}<span class="btn-ghost !py-2 opacity-60">Next</span>{% else %}<a class="btn-ghost !py-2" href="/admin/articles?q={{ q|urlencode }}&category={{ category }}&page={{ page + 1 }}">Next</a>{% endif %}
+    </div>
+  </div>
+  {%- endif %}
+
+  {# article editor modal – filled and submitted by static/js/app.js #}
+  <div data-article-modal hidden class="fade-in fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+    <form data-article-form class="pop-in my-8 w-full max-w-3xl rounded-[8px] bg-paper shadow-2xl" novalidate>
+      <div class="flex items-center justify-between border-b border-line px-6 py-4">
+        <h2 class="font-sans text-lg font-bold" data-modal-title>New article</h2>
+        <button type="button" data-modal-close class="rounded-full p-2 hover:bg-soft" aria-label="Close">{{ icon('X', 'h-5 w-5') }}</button>
+      </div>
+      <div class="grid gap-4 p-6 sm:grid-cols-2">
+        {%- macro field(name, label, cls='sm:col-span-2') %}
+        <div class="{{ cls }}"><label class="label" for="f-{{ name }}">{{ label }}</label>{{ caller() }}<p class="mt-1 hidden text-xs font-medium text-accent" data-err="{{ name }}"></p></div>
+        {%- endmacro %}
+        {% call field('title', 'Headline') %}<input id="f-title" name="title" class="input" />{% endcall %}
+        {% call field('subtitle', 'Sub-headline') %}<input id="f-subtitle" name="subtitle" class="input" />{% endcall %}
+        {% call field('description', 'Summary') %}<textarea id="f-description" name="description" rows="2" class="input"></textarea>{% endcall %}
+        {% call field('content', 'Body (separate paragraphs with a blank line)') %}<textarea id="f-content" name="content" rows="9" class="input font-serif"></textarea>{% endcall %}
+        {% call field('category', 'Category', '') %}<select id="f-category" name="category" class="input">{% for c in categories %}<option value="{{ c.slug }}">{{ c.label }}</option>{% endfor %}</select>{% endcall %}
+        {% call field('source', 'Source', '') %}<input id="f-source" name="source" class="input" />{% endcall %}
+        {% call field('author', 'Author', '') %}<input id="f-author" name="author" class="input" />{% endcall %}
+        {% call field('popularityScore', 'Popularity score (0–100)', '') %}<input id="f-popularityScore" name="popularityScore" type="number" min="0" max="100" value="50" class="input" />{% endcall %}
+        {% call field('image', 'Image URL') %}<input id="f-image" name="image" class="input" placeholder="https://…" />{% endcall %}
+        {% call field('tags', 'Tags (comma separated)') %}<input id="f-tags" name="tags" class="input" />{% endcall %}
+        <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" name="isBreaking" class="h-4 w-4 accent-[rgb(var(--accent))]" /> Show in breaking-news ticker</label>
+        <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" name="isFeatured" class="h-4 w-4 accent-[rgb(var(--accent))]" /> Feature on homepage hero</label>
+        <p role="alert" data-form-error hidden class="text-sm font-medium text-accent sm:col-span-2"></p>
+      </div>
+      <div class="flex justify-end gap-3 border-t border-line px-6 py-4">
+        <button type="button" data-modal-close class="btn-ghost">Cancel</button>
+        <button class="btn-primary" data-submit><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> <span data-submit-label>Publish</span></button>
+      </div>
+    </form>
+  </div>
+
+  <div data-confirm-modal hidden class="fade-in fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+    <div class="pop-in w-full max-w-sm rounded-[8px] bg-paper p-6 shadow-2xl">
+      <h3 class="font-sans text-lg font-bold">Delete this article?</h3>
+      <p class="mt-2 text-sm text-muted">“<span data-confirm-title></span>” and all related bookmarks, likes and reading history will be permanently removed.</p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" data-confirm-cancel class="btn-ghost">Cancel</button>
+        <button type="button" data-confirm-ok class="btn-primary">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

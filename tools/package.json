@@ -1,0 +1,7 @@
+{
+  "name": "newssphere-css-build",
+  "private": true,
+  "description": "OPTIONAL. Only needed if you edit templates/JS and want to regenerate static/css/styles.css. The app itself needs no Node.",
+  "scripts": { "build:css": "tailwindcss -c tailwind.config.js -i input.css -o ../static/css/styles.css --minify" },
+  "devDependencies": { "tailwindcss": "3.4.14" }
+}

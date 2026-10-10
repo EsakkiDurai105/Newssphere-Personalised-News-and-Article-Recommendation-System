@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import recommendation_card with context %}
+{% from 'components/misc.html' import page_header, empty_state with context %}
+{% block content %}
+{% call page_header('For You', kicker=(('Curated for ' ~ user.name.split(' ')[0]) if user else 'Personalised news'), subtitle='Ranked by a transparent, rule-based algorithm that weighs your interests, reading history, likes, saved stories, freshness and popularity.') %}
+{%- if user %}
+<div class="mt-5 flex flex-wrap items-center gap-2">
+  <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted">{{ icon('Sparkles', 'h-4 w-4 text-accent') }} You follow:</span>
+  {%- for i in (user.interests or []) %}<a href="/category/{{ i }}" class="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{{ i|cat_label }}</a>{% else %}<span class="text-sm text-muted">no topics yet</span>{% endfor %}
+  <a href="/profile" class="ml-1 inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline">{{ icon('Settings2', 'h-4 w-4') }} Edit interests</a>
+</div>
+{%- else %}
+<div class="mt-5 flex flex-wrap gap-3">
+  <a href="/register" class="btn-primary">Create free account</a>
+  <a href="/login" class="btn-ghost">Sign in</a>
+</div>
+{%- endif %}
+{% endcall %}
+<div class="container-x py-10">
+  {%- set lst = recs.articles if recs else [] %}
+  {%- if not lst %}
+  {{ empty_state('No recommendations yet', "Read, like or save a few stories and we'll start tailoring your feed.", action_to='/latest', action_label='Browse latest news') }}
+  {%- else %}
+  <div class="grid gap-x-8 gap-y-10 lg:grid-cols-12">
+    {{ recommendation_card(lst[0], large=true, cls='lg:col-span-8') }}
+    <div class="space-y-6 lg:col-span-4">
+      {%- for a in lst[1:4] %}{{ recommendation_card(a, index=loop.index, cls='border-b border-line pb-6 last:border-0') }}{% endfor %}
+    </div>
+    <div class="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:col-span-12 lg:grid-cols-3">
+      {%- for a in lst[4:] %}{{ recommendation_card(a, index=loop.index0, large=true) }}{% endfor %}
+    </div>
+  </div>
+  {%- endif %}
+</div>
+{% endblock %}

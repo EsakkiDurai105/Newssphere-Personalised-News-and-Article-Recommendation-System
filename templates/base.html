@@ -1,0 +1,235 @@
+{%- from 'components/misc.html' import logo, avatar with context -%}
+{%- from 'components/nav_macros.html' import nav_active with context -%}
+{%- set links = [('/', 'Home', true, None), ('/latest', 'Latest', false, None), ('/trending', 'Trending', false, None), ('/categories', 'Categories', false, None), ('/for-you', 'For You', false, 'Sparkles')] -%}
+{%- set bottom = [('/', 'Home', 'Home', true), ('/latest', 'Clock', 'Latest', false), ('/for-you', 'Sparkles', 'For You', false), ('/trending', 'Flame', 'Trending', false), ('/bookmarks', 'Bookmark', 'Saved', false)] -%}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="{{ description or 'NewsSphere – personalised news and articles picked for you.' }}" />
+    <meta name="theme-color" content="#b3121f" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet" />
+    <title>{{ (title ~ ' – NewsSphere') if title else 'NewsSphere – News picked for you' }}</title>
+    <script>
+      // apply the saved theme before first paint to avoid a flash
+      document.documentElement.classList.add('js');
+      try {
+        var t = localStorage.getItem('ns-theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    {% block head %}{% endblock %}
+  </head>
+  <body data-auth="{{ 'true' if user else 'false' }}" data-path="{{ request.full_path.rstrip('?') }}">
+    {% block body %}
+    <div class="flex min-h-screen flex-col pb-16 md:pb-0">
+      {% block navbar %}
+      <header id="site-header" class="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md transition-shadow">
+        <div class="container-x flex h-16 items-center justify-between gap-4">
+          <div class="flex items-center gap-2 lg:w-[260px]">
+            <button class="grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-soft lg:hidden" data-drawer-open aria-label="Open menu">{{ icon('Menu', 'h-5 w-5') }}</button>
+            {{ logo() }}
+          </div>
+
+          <nav class="hidden items-center gap-7 lg:flex" aria-label="Primary">
+            {%- for to, label, end, ic in links %}
+            {%- set active = nav_active(path, to, end) == 'true' %}
+            <a href="{{ to }}" class="relative px-1 py-2 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors hover:text-accent {{ 'text-accent' if active else 'text-ink' }}"{% if active %} aria-current="page"{% endif %}>
+              <span class="inline-flex items-center gap-1">{% if ic %}{{ icon(ic, 'h-3.5 w-3.5') }}{% endif %}{{ label }}</span>
+              {%- if active %}<span class="nav-underline absolute inset-x-0 -bottom-[17px] h-[3px] bg-accent"></span>{% endif %}
+            </a>
+            {%- endfor %}
+          </nav>
+
+          <div class="flex items-center justify-end gap-0.5 lg:w-[260px]">
+            <button class="grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-soft" data-search-open aria-label="Search (press /)">{{ icon('Search', 'h-[19px] w-[19px]') }}</button>
+            <a href="/bookmarks" class="hidden h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-soft sm:grid" aria-label="Bookmarks">{{ icon('Bookmark', 'h-[19px] w-[19px]') }}</a>
+            <button class="grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-soft" data-theme-toggle aria-label="Toggle dark mode">
+              <span class="theme-icon inline-flex"><span class="icon-moon dark:hidden">{{ icon('Moon', 'h-[19px] w-[19px]') }}</span><span class="icon-sun hidden dark:inline-flex">{{ icon('Sun', 'h-[19px] w-[19px]') }}</span></span>
+            </button>
+
+            {%- if user %}
+            <div class="relative ml-1" data-account>
+              <button data-account-btn class="rounded-full ring-2 ring-transparent transition hover:ring-accent/40" aria-label="Account menu" aria-expanded="false">{{ avatar(user) }}</button>
+              <div data-account-menu hidden class="menu-pop absolute right-0 mt-3 w-60 overflow-hidden rounded-[4px] border border-line bg-paper shadow-xl">
+                <div class="border-b border-line px-4 py-3">
+                  <div class="truncate text-sm font-bold">{{ user.name }}</div>
+                  <div class="truncate text-xs text-muted">{{ user.email }}</div>
+                </div>
+                <a href="/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-soft">{{ icon('User', 'h-4 w-4 text-muted') }}Profile &amp; interests</a>
+                <a href="/bookmarks" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-soft">{{ icon('Bookmark', 'h-4 w-4 text-muted') }}Saved articles</a>
+                <a href="/history" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-soft">{{ icon('History', 'h-4 w-4 text-muted') }}Reading history</a>
+                {%- if is_admin %}<a href="/admin" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-soft">{{ icon('Shield', 'h-4 w-4 text-muted') }}Admin dashboard</a>{% endif %}
+                <button type="button" data-logout class="flex w-full items-center gap-3 border-t border-line px-4 py-2.5 text-left text-sm text-accent hover:bg-soft">{{ icon('LogOut', 'h-4 w-4') }}Sign out</button>
+              </div>
+            </div>
+            {%- else %}
+            <a href="/login" class="btn-primary ml-2 !px-4 !py-2">Sign in</a>
+            {%- endif %}
+          </div>
+        </div>
+
+        <div class="hidden border-t border-line/70 bg-soft/60 md:block">
+          <div class="container-x flex gap-5 overflow-x-auto py-2 scrollbar-none">
+            {%- for c in categories %}
+            <a href="/category/{{ c.slug }}" class="whitespace-nowrap text-[13px] font-medium transition-colors hover:text-accent {{ 'text-accent' if path == '/category/' ~ c.slug else 'text-muted' }}">{{ c.label }}</a>
+            {%- endfor %}
+          </div>
+        </div>
+      </header>
+
+      {# mobile drawer #}
+      <div data-drawer-backdrop hidden class="fade-in fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"></div>
+      <aside data-drawer class="drawer fixed inset-y-0 left-0 z-50 flex w-[84%] max-w-sm flex-col overflow-y-auto bg-paper shadow-2xl lg:hidden" aria-label="Mobile menu" aria-hidden="true">
+        <div class="flex h-16 items-center justify-between border-b border-line px-4">
+          {{ logo() }}
+          <button class="grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-soft" data-drawer-close aria-label="Close menu">{{ icon('X', 'h-5 w-5') }}</button>
+        </div>
+        <nav class="flex flex-col px-4 py-4">
+          {%- for to, label, end, ic in links %}
+          <a href="{{ to }}" class="border-b border-line py-3.5 text-lg font-bold {{ 'text-accent' if nav_active(path, to, end) == 'true' }}">{{ label }}</a>
+          {%- endfor %}
+        </nav>
+        <div class="px-4 pb-8">
+          <div class="kicker mb-3">Sections</div>
+          <div class="grid grid-cols-2 gap-2">
+            {%- for c in categories %}
+            <a href="/category/{{ c.slug }}" class="rounded-sm border border-line px-3 py-2.5 text-sm font-medium hover:bg-soft">{{ c.label }}</a>
+            {%- endfor %}
+          </div>
+          {%- if not user %}<a href="/register" class="btn-primary mt-6 w-full">Create free account</a>{% endif %}
+        </div>
+      </aside>
+
+      {# search overlay #}
+      <div data-search hidden class="fade-in fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Search">
+        <div class="slide-down mx-auto mt-[8vh] w-[94%] max-w-2xl overflow-hidden rounded-[6px] bg-paper shadow-2xl">
+          <form data-search-form action="/search" method="get" class="flex items-center gap-3 border-b border-line px-5">
+            {{ icon('Search', 'h-5 w-5 text-muted') }}
+            <input data-search-input name="q" autocomplete="off" placeholder="Search headlines, topics, sources…" class="h-16 flex-1 bg-transparent font-display text-xl outline-none placeholder:text-muted/70" />
+            <span data-search-spinner hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin text-muted') }}</span>
+            <button type="button" data-search-close class="rounded-full p-1.5 text-muted hover:bg-soft" aria-label="Close search">{{ icon('X', 'h-5 w-5') }}</button>
+          </form>
+          <div class="max-h-[60vh] overflow-y-auto">
+            <div data-search-results></div>
+            <div data-search-browse class="px-5 py-5">
+              <div class="kicker mb-3">Browse a section</div>
+              <div class="flex flex-wrap gap-2">
+                {%- for c in categories %}
+                <a href="/category/{{ c.slug }}" class="rounded-full border border-line px-3.5 py-1.5 text-sm hover:border-accent hover:text-accent">{{ c.label }}</a>
+                {%- endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# sticky mobile bottom navigation #}
+      <nav class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Mobile">
+        {%- for to, ic, label, end in bottom %}
+        <a href="{{ to }}" class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold {{ 'text-accent' if nav_active(path, to, end) == 'true' else 'text-muted' }}">{{ icon(ic if to != '/' else 'Home', 'h-5 w-5') }}{{ label }}</a>
+        {%- endfor %}
+      </nav>
+      {% endblock %}
+
+      {# breaking-news ticker #}
+      {% block ticker %}
+      {%- set items = breaking() -%}
+      {%- if not items %}
+      <div class="h-10 border-b border-line bg-ink" aria-hidden="true"></div>
+      {%- else %}
+      <div class="flex h-10 items-stretch overflow-hidden border-b border-black/20 bg-ink text-paper" role="marquee" aria-label="Breaking news">
+        <div class="relative z-10 flex shrink-0 items-center gap-2 bg-accent px-4 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white shadow-[6px_0_14px_-4px_rgba(0,0,0,.4)]">
+          <span class="h-2 w-2 rounded-full bg-white animate-pulseDot"></span>
+          Breaking
+        </div>
+        <div class="relative flex-1 overflow-hidden">
+          <div class="ticker-track absolute inset-y-0 left-0 flex w-max animate-marquee items-center whitespace-nowrap" style="animation-duration: {{ [40, items|length * 9]|max }}s">
+            {%- for rep in range(2) %}{% for a in items %}
+            <a href="/article/{{ a._id }}" class="group flex items-center gap-2 px-6 text-[13px] font-medium hover:text-white"{% if rep %} aria-hidden="true" tabindex="-1"{% endif %}>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-accent group-hover:text-white/80">{{ a.category|cat_label }}</span>
+              {{ icon('ArrowRight', 'h-3 w-3 opacity-50') }}
+              <span class="group-hover:underline">{{ a.title }}</span>
+            </a>
+            {%- endfor %}{% endfor %}
+          </div>
+        </div>
+      </div>
+      {%- endif %}
+      {% endblock %}
+
+      <main class="page-enter flex-1">
+        {% block content %}{% endblock %}
+      </main>
+
+      {% block footer %}
+      <footer class="mt-20 bg-ink text-paper">
+        <div class="container-x grid gap-10 py-14 md:grid-cols-12">
+          <div class="md:col-span-4">
+            {{ logo(light=true) }}
+            <p class="mt-4 max-w-sm text-sm leading-relaxed text-paper/65">Independent, personalised journalism. NewsSphere learns what you care about from what you read, like and save — with a transparent, rule-based algorithm, never a black box.</p>
+            <div class="mt-6 flex gap-2.5">
+              {%- for label, href, text in [('X','https://x.com','𝕏'),('Facebook','https://facebook.com','f'),('LinkedIn','https://linkedin.com','in'),('Instagram','https://instagram.com','ig'),('YouTube','https://youtube.com','▶')] %}
+              <a href="{{ href }}" target="_blank" rel="noreferrer" aria-label="{{ label }}" class="grid h-9 w-9 place-items-center rounded-full border border-paper/25 text-xs font-bold text-paper/80 transition hover:border-accent hover:bg-accent hover:text-white">{{ text }}</a>
+              {%- endfor %}
+            </div>
+          </div>
+          <div class="md:col-span-3">
+            <h4 class="kicker !text-paper/50">Sections</h4>
+            <ul class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {%- for c in categories %}<li><a href="/category/{{ c.slug }}" class="text-paper/75 hover:text-white">{{ c.label }}</a></li>{% endfor %}
+            </ul>
+          </div>
+          <div class="md:col-span-2">
+            <h4 class="kicker !text-paper/50">Explore</h4>
+            <ul class="mt-4 space-y-2 text-sm">
+              {%- for to, label in [('/latest','Latest'),('/trending','Trending'),('/for-you','For You'),('/bookmarks','Saved'),('/search','Search')] %}<li><a href="{{ to }}" class="text-paper/75 hover:text-white">{{ label }}</a></li>{% endfor %}
+            </ul>
+          </div>
+          <div class="md:col-span-3">
+            <h4 class="kicker !text-paper/50">Company</h4>
+            <ul class="mt-4 space-y-2 text-sm">
+              {%- for to, label in [('/page/about','About'),('/page/privacy','Privacy Policy'),('/page/terms','Terms of Service'),('/page/contact','Contact')] %}<li><a href="{{ to }}" class="text-paper/75 hover:text-white">{{ label }}</a></li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="border-t border-paper/10">
+          <div class="container-x flex flex-col items-center justify-between gap-2 py-5 text-xs text-paper/50 sm:flex-row">
+            <span>© <span data-year>{{ now_year }}</span> NewsSphere Media. All rights reserved.</span>
+            <span>Sample stories in this demo are fictional.</span>
+          </div>
+        </div>
+      </footer>
+      {% endblock %}
+    </div>
+    {% endblock %}
+
+    {# guest prompt modal #}
+    <div data-auth-modal hidden class="fade-in fixed inset-0 z-[70] grid place-items-center bg-black/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div class="pop-in relative w-full max-w-md rounded-[6px] bg-paper p-8 text-center shadow-2xl">
+        <button type="button" data-auth-close class="absolute right-3 top-3 rounded-full p-2 text-muted hover:bg-soft" aria-label="Close">{{ icon('X', 'h-5 w-5') }}</button>
+        <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent">{{ icon('Bookmark', 'h-6 w-6') }}</div>
+        <h3 class="mt-5 text-2xl font-extrabold">Sign in to save &amp; personalise</h3>
+        <p class="mt-2 text-muted">Bookmark stories, like articles and get a feed that learns from your reading. It's free.</p>
+        <div class="mt-6 grid gap-3 sm:grid-cols-2">
+          <a href="/login" data-auth-link class="btn-primary">Sign in</a>
+          <a href="/register" data-auth-link class="btn-ghost">Create account</a>
+        </div>
+      </div>
+    </div>
+
+    {# toast #}
+    <div class="pointer-events-none fixed inset-x-0 bottom-20 z-[80] flex justify-center px-4 md:bottom-8" id="toast-root"></div>
+
+    <script id="icon-data" type="application/json">{{ icons_json('circle-check', 'circle-alert', 'info', 'loader-circle', 'check', 'search-x', 'arrow-up-right')|safe }}</script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import featured_card, compact_card, horizontal_card, story_card, trending_card, cat_tag with context %}
+{% from 'components/misc.html' import section_header with context %}
+{% from 'components/for_you_section.html' import for_you_section with context %}
+{% from 'components/newsletter.html' import newsletter with context %}
+{% block content %}
+{%- if not data %}
+<div class="container-x py-16">
+  <div class="mx-auto max-w-md py-16 text-center">
+    <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-soft text-muted">{{ icon('Newspaper', 'h-7 w-7') }}</div>
+    <h3 class="mt-5 text-2xl font-bold">No articles yet</h3>
+    <p class="mt-2 text-muted">The database is empty. Run <code>python seed.py</code> to load the sample stories.</p>
+  </div>
+</div>
+{%- else %}
+{# ---------- HERO ---------- #}
+<section class="container-x pt-6 sm:pt-8">
+  <div class="mb-5 flex items-center justify-between border-b border-line pb-3 text-xs">
+    <span class="font-bold uppercase tracking-[0.14em]" data-local-date>{{ now_dt|format_date }}</span>
+    <span class="hidden text-muted sm:inline">Your world, edited for you</span>
+  </div>
+  <div class="grid gap-8 lg:grid-cols-12">
+    {{ featured_card(data.hero, cls='lg:col-span-8') }}
+    <aside class="lg:col-span-4">
+      <div class="rule-thick mb-4 pt-3"><span class="kicker">Top stories</span></div>
+      {%- for a in data.sideStories %}{{ compact_card(a, index=loop.index0, thumb=true) }}{% endfor %}
+    </aside>
+  </div>
+</section>
+
+{# ---------- TOP STORIES ---------- #}
+<section class="container-x mt-14">
+  {{ section_header("Top Stories", kicker="Editors' picks", to="/latest", link_label="All latest") }}
+  <div class="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4 lg:[&>*:not(:first-child)]:border-l lg:[&>*:not(:first-child)]:border-line lg:[&>*:not(:first-child)]:pl-6">
+    {%- for a in data.topStories %}{{ story_card(a, index=loop.index0) }}{% endfor %}
+  </div>
+</section>
+
+{# ---------- TRENDING ---------- #}
+<section class="mt-16 bg-ink py-14 text-paper">
+  <div class="container-x">
+    {{ section_header("Trending Now", kicker="What the world is reading", to="/trending", link_label="See all trending") }}
+    <div class="relative" data-carousel>
+      <div class="mb-4 hidden justify-end gap-2 md:flex">
+        <button type="button" data-carousel-prev aria-label="Scroll left" class="grid h-10 w-10 place-items-center rounded-full border border-current/30 transition hover:bg-white/10">{{ icon('ChevronLeft', 'h-5 w-5') }}</button>
+        <button type="button" data-carousel-next aria-label="Scroll right" class="grid h-10 w-10 place-items-center rounded-full border border-current/30 transition hover:bg-white/10">{{ icon('ChevronRight', 'h-5 w-5') }}</button>
+      </div>
+      <div data-carousel-track class="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 scrollbar-none sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+        {%- for a in data.trending %}
+        <div class="reveal reveal-x" style="--i:{{ loop.index0 }}">{{ trending_card(a, loop.index) }}</div>
+        {%- endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------- PERSONALISED ---------- #}
+{{ for_you_section(recs) }}
+
+{# ---------- LATEST + MOST READ ---------- #}
+<section class="container-x mt-16">
+  <div class="grid gap-12 lg:grid-cols-12">
+    <div class="lg:col-span-8">
+      {{ section_header("Latest News", kicker="Just in", to="/latest") }}
+      <div class="space-y-5">
+        {%- for a in data.latest %}{{ horizontal_card(a, index=loop.index0) }}{% endfor %}
+      </div>
+    </div>
+    <aside class="lg:col-span-4">
+      {{ section_header("Most Read", kicker="Popular", heavy=false, cls='!mb-2') }}
+      <ol>
+        {%- for a in data.mostRead %}
+        <li class="group reveal reveal-x2 border-b border-line" style="--i:{{ loop.index0 }}">
+          <a href="/article/{{ a._id }}" class="flex gap-4 py-4">
+            <span class="font-display text-4xl font-black leading-none text-accent/90">{{ loop.index }}</span>
+            <div class="min-w-0">
+              {{ cat_tag(a.category) }}
+              <h3 class="mt-0.5 text-[15px] font-bold leading-snug"><span class="headline-link">{{ a.title }}</span></h3>
+              <div class="mt-1 flex items-center gap-1 text-xs text-muted">{{ icon('Eye', 'h-3 w-3') }} {{ a.views|compact }} reads</div>
+            </div>
+          </a>
+        </li>
+        {%- endfor %}
+      </ol>
+      <div class="mt-8 rounded-[4px] border border-line bg-soft p-5">
+        <div class="kicker">Explore sections</div>
+        <div class="mt-3 flex flex-wrap gap-2">
+          {%- for c in ['world','politics','technology','business','science','health','sports','entertainment','gaming','lifestyle','travel'] %}
+          <a href="/category/{{ c }}" class="rounded-full border border-line bg-paper px-3 py-1 text-xs font-medium hover:border-accent hover:text-accent">{{ c|cat_label }}</a>
+          {%- endfor %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+{# ---------- CATEGORY SECTIONS ---------- #}
+<section class="container-x mt-20 space-y-16">
+  {%- for sec in data.sections if sec.articles %}
+  <div>
+    {{ section_header(sec.category|cat_label, to='/category/' ~ sec.category, link_label='More ' ~ (sec.category|cat_label)) }}
+    <div class="grid gap-8 lg:grid-cols-12">
+      <div class="lg:col-span-7">{{ story_card(sec.articles[0]) }}</div>
+      <div class="lg:col-span-5">
+        {%- for a in sec.articles[1:] %}{{ compact_card(a, index=loop.index0, thumb=true) }}{% endfor %}
+      </div>
+    </div>
+  </div>
+  {%- endfor %}
+</section>
+
+<div class="mt-20">{{ newsletter() }}</div>
+{%- endif %}
+{% endblock %}

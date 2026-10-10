@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'components/auth_shell.html' import auth_shell with context %}
+{% block content %}
+{% call auth_shell('Create your account', "Free forever. Next, you'll choose the topics you want in your feed.") %}
+<form data-auth-form="register" class="space-y-5" novalidate>
+  <div>
+    <label class="label" for="name">Name</label>
+    <input id="name" name="name" autocomplete="name" class="input" />
+    <p class="mt-1 hidden text-xs font-medium text-accent" data-err="name"></p>
+  </div>
+  <div>
+    <label class="label" for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email" class="input" />
+    <p class="mt-1 hidden text-xs font-medium text-accent" data-err="email"></p>
+  </div>
+  <div>
+    <label class="label" for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" class="input" />
+    <div class="mt-2 flex gap-1" aria-hidden="true" data-strength>
+      {%- for i in range(4) %}<span class="h-1 flex-1 rounded-full bg-line transition-colors"></span>{% endfor %}
+    </div>
+    <p class="mt-1 hidden text-xs font-medium text-accent" data-err="password"></p>
+  </div>
+  <p role="alert" data-form-error hidden class="rounded-sm bg-accent/10 px-3 py-2 text-sm font-medium text-accent"></p>
+  <button class="btn-primary w-full !py-3" data-submit><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Create account</button>
+</form>
+<p class="mt-6 text-center text-sm text-muted">Already have an account? <a href="/login" class="font-semibold text-accent hover:underline">Sign in</a></p>
+{% endcall %}
+{% endblock %}

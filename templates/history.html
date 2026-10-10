@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import smart_image, cat_tag with context %}
+{% from 'components/misc.html' import page_header, empty_state with context %}
+{% block content %}
+{% call page_header('Reading History', kicker='Your library', subtitle="Everything you've opened. This is one of the signals behind your For You feed.") %}
+{%- if data.byCategory %}
+<div class="mt-5 flex flex-wrap items-center gap-2">
+  <span class="text-sm font-semibold text-muted">You read most:</span>
+  {%- for c in data.byCategory %}<a href="/category/{{ c._id }}" class="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{{ c._id|cat_label }} · {{ c.count }}</a>{% endfor %}
+</div>
+{%- endif %}
+{% endcall %}
+<div class="container-x max-w-4xl py-10">
+  {%- if not data.history %}
+  {{ empty_state('Nothing here yet', 'Articles you open while signed in will be listed here.', action_to='/latest', action_label='Start reading') }}
+  {%- else %}
+  <div class="mb-6 flex justify-end">
+    <button type="button" data-clear-history class="btn-ghost !py-2 text-accent"><span data-clear-icon>{{ icon('Trash2', 'h-4 w-4') }}</span><span data-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span> Clear history</button>
+  </div>
+  {%- for day, items in groups.items() %}
+  <section class="mb-10">
+    <h2 class="rule-thick mb-4 pt-2 font-sans text-sm font-bold uppercase tracking-[0.14em]">{{ day }}</h2>
+    {%- for h in items %}
+    <a href="/article/{{ h.article._id }}" class="group flex items-center gap-4 border-b border-line py-4">
+      <div class="w-24 shrink-0 overflow-hidden rounded-[3px] sm:w-32">{{ smart_image(h.article.image, '', 'aspect-[4/3]') }}</div>
+      <div class="min-w-0 flex-1">
+        {{ cat_tag(h.article.category) }}
+        <h3 class="mt-0.5 text-lg font-bold leading-snug"><span class="headline-link">{{ h.article.title }}</span></h3>
+        <div class="mt-1 text-xs text-muted">{{ h.article.source }} · read at <span data-local-time="{{ h.readAt|iso_z }}">{{ h.readAt|format_time }}</span></div>
+      </div>
+    </a>
+    {%- endfor %}
+  </section>
+  {%- endfor %}
+  {%- if data.pages > 1 %}
+  <div class="flex items-center justify-center gap-3">
+    {%- if page <= 1 %}<span class="btn-ghost opacity-60">Newer</span>{% else %}<a href="/history?page={{ page - 1 }}" class="btn-ghost">Newer</a>{% endif %}
+    <span class="text-sm text-muted">Page {{ page }} of {{ data.pages }}</span>
+    {%- if page >= data.pages %}<span class="btn-ghost opacity-60">Older</span>{% else %}<a href="/history?page={{ page + 1 }}" class="btn-ghost">Older</a>{% endif %}
+  </div>
+  {%- endif %}
+  {%- endif %}
+</div>
+{% endblock %}

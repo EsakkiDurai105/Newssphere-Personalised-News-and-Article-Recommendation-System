@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import featured_card, horizontal_card with context %}
+{% from 'components/misc.html' import page_header, empty_state, load_more with context %}
+{% block content %}
+{{ page_header('Latest News', kicker='Newest first', subtitle='Every story as it breaks, updated continuously through the day.') }}
+<div class="container-x py-10">
+  {%- if not data.articles %}
+  {{ empty_state('No articles found', 'There are no stories yet. Check back soon.', icon_name='SearchX') }}
+  {%- else %}
+  {{ featured_card(data.articles[0]) }}
+  <div id="list" class="mx-auto mt-12 max-w-4xl space-y-6">
+    {%- for a in data.articles[1:] %}{{ horizontal_card(a, index=loop.index0 % 8) }}{% endfor %}
+  </div>
+  {{ load_more(data.hasMore, '/latest?partial=1&limit=10&page=2', data.articles|length, data.total, '#list') }}
+  {%- endif %}
+</div>
+{% endblock %}

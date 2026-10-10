@@ -1,0 +1,2 @@
+{% from 'components/cards.html' import horizontal_card with context %}
+{%- for a in data.articles %}{{ horizontal_card(a, index=loop.index0 % 6, description=false) }}{% endfor -%}

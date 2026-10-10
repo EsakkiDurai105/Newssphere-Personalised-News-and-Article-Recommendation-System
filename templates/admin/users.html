@@ -1,0 +1,65 @@
+{% extends 'admin/base.html' %}
+{% from 'components/misc.html' import avatar, empty_state with context %}
+{% block admin %}
+<div class="mx-auto max-w-6xl">
+  <div class="mb-6">
+    <h1 class="text-3xl font-black">Users</h1>
+    <p class="text-muted">{{ data.total }} registered readers</p>
+  </div>
+  <form action="/admin/users" method="get" class="relative mb-4 max-w-md" data-admin-search>
+    {{ icon('Search', 'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted') }}
+    <input name="q" value="{{ q }}" placeholder="Search name or email…" class="input !pl-9" autocomplete="off" />
+  </form>
+
+  <div class="overflow-x-auto rounded-[6px] border border-line bg-paper">
+    <table class="w-full min-w-[820px] text-left text-sm">
+      <thead class="border-b border-line bg-soft text-xs uppercase tracking-wider text-muted">
+        <tr>
+          <th class="px-4 py-3">User</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Interests</th>
+          <th class="px-4 py-3 text-right">Reads</th><th class="px-4 py-3 text-right">Saved</th><th class="px-4 py-3 text-right">Liked</th>
+          <th class="px-4 py-3">Joined</th><th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line">
+        {%- for u in data.users %}
+        {%- set me = (u._id|string) == (user._id|string) %}
+        <tr class="hover:bg-soft/60" data-user-row="{{ u._id }}" data-name="{{ u.name }}">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              {{ avatar(u, 'h-9 w-9') }}
+              <div class="min-w-0">
+                <div class="truncate font-semibold">{{ u.name }}{% if me %}<span class="ml-1.5 text-xs font-normal text-muted">(you)</span>{% endif %}</div>
+                <div class="truncate text-xs text-muted">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-bold {{ 'bg-accent/15 text-accent' if u.role == 'admin' else 'bg-soft text-muted' }}">{{ u.role }}</span></td>
+          <td class="max-w-[220px] px-4 py-3 text-xs text-muted">{{ (u.interests|map('cat_label')|join(', ')) if u.interests else '—' }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ u.readCount }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ u.bookmarkCount }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ u.likeCount }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-muted">{{ u.createdAt|time_ago }}</td>
+          <td class="px-4 py-3">
+            <div class="flex justify-end gap-1">
+              <button type="button" data-toggle-role="{{ 'user' if u.role == 'admin' else 'admin' }}" {{ 'disabled' if me }} class="rounded-full p-2 hover:bg-soft disabled:opacity-30" aria-label="{{ 'Revoke admin' if u.role == 'admin' else 'Make admin' }}" title="{{ 'Revoke admin' if u.role == 'admin' else 'Make admin' }}">{{ icon('ShieldOff' if u.role == 'admin' else 'ShieldCheck', 'h-4 w-4') }}</button>
+              <button type="button" data-delete-user {{ 'disabled' if me }} class="rounded-full p-2 text-accent hover:bg-accent/10 disabled:opacity-30" aria-label="Delete user">{{ icon('Trash2', 'h-4 w-4') }}</button>
+            </div>
+          </td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+    {%- if not data.users %}{{ empty_state('No users found', 'Try a different search.', icon_name='SearchX') }}{% endif %}
+  </div>
+
+  {%- if data.pages > 1 %}
+  <div class="mt-5 flex items-center justify-between text-sm">
+    <span class="text-muted">Page {{ page }} of {{ data.pages }}</span>
+    <div class="flex gap-2">
+      {%- if page <= 1 %}<span class="btn-ghost !py-2 opacity-60">Previous</span>{% else %}<a class="btn-ghost !py-2" href="/admin/users?q={{ q|urlencode }}&page={{ page - 1 }}">Previous</a>{% endif %}
+      {%- if page >= data.pages %}<span class="btn-ghost !py-2 opacity-60">Next</span>{% else %}<a class="btn-ghost !py-2" href="/admin/users?q={{ q|urlencode }}&page={{ page + 1 }}">Next</a>{% endif %}
+    </div>
+  </div>
+  {%- endif %}
+</div>
+{% endblock %}

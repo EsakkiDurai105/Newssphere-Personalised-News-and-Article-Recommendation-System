@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% from 'components/misc.html' import page_header with context %}
+{% block content %}
+{{ page_header(page.title, kicker=page.kicker) }}
+<div class="container-x max-w-3xl py-12">
+  <div class="prose-article">
+    {%- for p in page.body %}<p>{{ p }}</p>{% endfor %}
+  </div>
+  <a href="/" class="btn-ghost mt-4">← Back to the front page</a>
+</div>
+{% endblock %}

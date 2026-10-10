@@ -1,0 +1,177 @@
+{# Jinja ports of frontend/src/components/{SmartImage,BookmarkButton,LikeButton,ArticleCards}.jsx — same markup & Tailwind classes. #}
+
+{% macro smart_image(src, alt='', ratio='aspect-[16/10]', cls='', zoom=true, eager=false) -%}
+<div class="relative overflow-hidden bg-soft {{ ratio }} {{ cls }}">
+  {%- if src %}
+  <img src="{{ src }}" alt="{{ alt }}" loading="{{ 'eager' if eager else 'lazy' }}" decoding="async" data-smart class="h-full w-full object-cover transition duration-700 ease-out {{ 'group-hover:scale-[1.04]' if zoom }}">
+  <div class="shimmer absolute inset-0" data-shimmer></div>
+  {%- endif %}
+  <div class="absolute inset-0 grid place-items-center bg-gradient-to-br from-soft to-line text-muted {{ '' if not src else 'hidden' }}" data-fallback>{{ icon('Newspaper', 'h-8 w-8 opacity-50') }}</div>
+</div>
+{%- endmacro %}
+
+{% macro bookmark_btn(id, overlay=false, label=false, cls='') -%}
+{%- set saved = (id|string) in bookmark_ids -%}
+{%- set base = 'h-9 w-9 rounded-full bg-paper/90 text-ink shadow-md backdrop-blur hover:bg-paper' if overlay else ('gap-2 rounded-sm border border-line px-3.5 py-2 text-sm font-semibold hover:bg-soft' if label else 'h-8 w-8 rounded-full hover:bg-soft') -%}
+<button type="button" data-bookmark="{{ id }}" aria-pressed="{{ 'true' if saved else 'false' }}" aria-label="{{ 'Remove bookmark' if saved else 'Save article' }}" title="{{ 'Remove bookmark' if saved else 'Save for later' }}" class="tap {{ '' if 'absolute' in cls else 'relative' }} inline-flex items-center justify-center transition-colors {{ base }} {{ 'text-accent' if saved else 'text-muted' }} {{ cls }}">
+  <span class="inline-flex" data-bm-icon>{{ icon('Bookmark', 'h-[18px] w-[18px]', fill='currentColor' if saved else None) }}</span>
+  {%- if label %}<span data-bm-label>{{ 'Saved' if saved else 'Save' }}</span>{% endif %}
+</button>
+{%- endmacro %}
+
+{% macro like_btn(id, count=0, cls='') -%}
+{%- set liked = (id|string) in liked_ids -%}
+<button type="button" data-like="{{ id }}" data-count="{{ count }}" aria-pressed="{{ 'true' if liked else 'false' }}" aria-label="{{ 'Unlike article' if liked else 'Like article' }}" class="tap relative inline-flex items-center gap-2 rounded-sm border px-3.5 py-2 text-sm font-semibold transition-colors {{ 'border-accent/40 bg-accent/10 text-accent' if liked else 'border-line text-ink hover:bg-soft' }} {{ cls }}">
+  <span class="relative inline-flex">
+    <span class="inline-flex" data-like-icon>{{ icon('Heart', 'h-[18px] w-[18px]', fill='currentColor' if liked else None) }}</span>
+  </span>
+  <span class="tabular-nums" data-like-count>{{ count|compact }}</span>
+</button>
+{%- endmacro %}
+
+{# CategoryTag: the original was a <Link> nested inside the card <Link>. Nested anchors are invalid HTML (the parser would split
+   them), so it is a span navigated by JS (static/js/app.js → [data-href]). Looks and behaves identically. #}
+{% macro cat_tag(category, cls='') -%}
+<span role="link" tabindex="0" data-href="/category/{{ category }}" class="kicker relative z-10 cursor-pointer hover:underline {{ cls }}">{{ category|cat_label }}</span>
+{%- endmacro %}
+
+{% macro meta(a, show_source=true, cls='') -%}
+<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted {{ cls }}">
+  {%- if show_source %}<span class="font-semibold text-ink/80">{{ a.source }}</span><span aria-hidden="true">·</span>{% endif %}
+  <span>{{ a.publishedAt|time_ago }}</span>
+  <span aria-hidden="true">·</span>
+  <span class="inline-flex items-center gap-1">{{ icon('Clock', 'h-3 w-3') }}{{ a.readingTime }} min read</span>
+</div>
+{%- endmacro %}
+
+{# 1 — Large featured card #}
+{% macro featured_card(a, index=0, cls='') -%}
+<article class="group relative reveal {{ cls }}" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="block overflow-hidden rounded-[3px]">
+    <div class="relative">
+      {{ smart_image(a.image, a.title, 'aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[560px]', eager=true) }}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
+      <div class="absolute inset-x-0 bottom-0 p-5 sm:p-8 lg:p-10">
+        <span class="mb-3 inline-block rounded-[2px] bg-accent px-2 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white">{{ a.category|cat_label }}</span>
+        <h2 class="max-w-3xl text-2xl font-extrabold leading-[1.1] text-white sm:text-4xl lg:text-[2.9rem]"><span class="headline-link">{{ a.title }}</span></h2>
+        <p class="mt-3 line-clamp-2 max-w-2xl text-sm text-white/85 sm:text-base">{{ a.description }}</p>
+        <div class="mt-4 flex flex-wrap items-center gap-x-2 text-xs text-white/75">
+          <span class="font-semibold text-white">{{ a.source }}</span>·<span>{{ a.publishedAt|time_ago }}</span>·<span>{{ a.readingTime }} min read</span>
+        </div>
+      </div>
+    </div>
+  </a>
+  {{ bookmark_btn(a._id, overlay=true, cls='absolute right-4 top-4') }}
+</article>
+{%- endmacro %}
+
+{# 2 — Horizontal card #}
+{% macro horizontal_card(a, index=0, cls='', description=true) -%}
+<article class="group relative reveal border-b border-line pb-5 {{ cls }}" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="flex gap-4 sm:gap-5">
+    <div class="w-[38%] max-w-[240px] shrink-0 overflow-hidden rounded-[3px]">{{ smart_image(a.image, '', 'aspect-[4/3]') }}</div>
+    <div class="min-w-0 flex-1 pr-8">
+      {{ cat_tag(a.category) }}
+      <h3 class="mt-1 text-lg font-bold leading-snug sm:text-xl"><span class="headline-link">{{ a.title }}</span></h3>
+      {%- if description %}<p class="mt-1.5 line-clamp-2 hidden text-sm text-muted sm:block">{{ a.description }}</p>{% endif %}
+      {{ meta(a, cls='mt-2') }}
+    </div>
+  </a>
+  {{ bookmark_btn(a._id, cls='absolute bottom-4 right-0') }}
+</article>
+{%- endmacro %}
+
+{# 3 — Compact card #}
+{% macro compact_card(a, index=0, thumb=false, cls='') -%}
+<article class="group relative reveal border-b border-line py-4 first:pt-0 last:border-0 {{ cls }}" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="flex items-start gap-3">
+    <div class="min-w-0 flex-1 pr-7">
+      {{ cat_tag(a.category) }}
+      <h3 class="mt-1 text-base font-bold leading-snug"><span class="headline-link">{{ a.title }}</span></h3>
+      {{ meta(a, show_source=false, cls='mt-1.5') }}
+    </div>
+    {%- if thumb %}
+    <div class="w-20 shrink-0 overflow-hidden rounded-[3px] sm:w-24">{{ smart_image(a.image, '', 'aspect-square') }}</div>
+    {%- endif %}
+  </a>
+  {%- if not thumb %}{{ bookmark_btn(a._id, cls='absolute right-0 top-3') }}{% endif %}
+</article>
+{%- endmacro %}
+
+{# Standard vertical card used in grids #}
+{% macro story_card(a, index=0, cls='') -%}
+<article class="group relative reveal {{ cls }}" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="block">
+    <div class="overflow-hidden rounded-[3px]">{{ smart_image(a.image, '', 'aspect-[3/2]') }}</div>
+    <div class="pt-3">
+      {{ cat_tag(a.category) }}
+      <h3 class="mt-1 text-lg font-bold leading-snug"><span class="headline-link">{{ a.title }}</span></h3>
+      <p class="mt-1.5 line-clamp-2 text-sm text-muted">{{ a.description }}</p>
+      {{ meta(a, cls='mt-2') }}
+    </div>
+  </a>
+  {{ bookmark_btn(a._id, overlay=true, cls='absolute right-3 top-3') }}
+</article>
+{%- endmacro %}
+
+{# 4 — Trending card #}
+{% macro trending_card(a, rank, cls='') -%}
+<article class="group relative w-[260px] shrink-0 snap-start sm:w-[290px] {{ cls }}">
+  <a href="/article/{{ a._id }}" class="block">
+    <div class="relative overflow-hidden rounded-[3px]">
+      {{ smart_image(a.image, '', 'aspect-[4/3]') }}
+      <span class="pointer-events-none absolute -bottom-3 left-2 font-display text-[5.5rem] font-black leading-none text-transparent" style="-webkit-text-stroke:2px #fff;text-shadow:0 4px 20px rgba(0,0,0,.45)">{{ rank }}</span>
+    </div>
+    <div class="pt-3">
+      {{ cat_tag(a.category) }}
+      <h3 class="mt-1 line-clamp-3 text-lg font-bold leading-snug text-current"><span class="headline-link">{{ a.title }}</span></h3>
+      <div class="mt-2 flex items-center gap-1 text-xs opacity-70">{{ icon('Clock', 'h-3 w-3') }} {{ a.readingTime }} min read</div>
+    </div>
+  </a>
+  {{ bookmark_btn(a._id, overlay=true, cls='absolute right-3 top-3') }}
+</article>
+{%- endmacro %}
+
+{# 5 — Recommendation card (shows why it was picked) #}
+{% macro recommendation_card(a, index=0, large=false, cls='') -%}
+{%- set reason = a.reasons[0] if a.reasons else None -%}
+<article class="group relative reveal {{ cls }}" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="block {{ '' if large else 'sm:flex sm:gap-4' }}">
+    <div class="overflow-hidden rounded-[3px] {{ '' if large else 'sm:w-44 sm:shrink-0' }}">{{ smart_image(a.image, '', 'aspect-[16/10]' if large else 'aspect-[16/10] sm:aspect-[4/3]') }}</div>
+    <div class="{{ 'pt-4' if large else 'pt-3 sm:pt-0' }} min-w-0 flex-1">
+      {%- if reason %}
+      <span class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent">{{ icon('Sparkles', 'h-3 w-3') }} {{ reason }}</span>
+      {%- endif %}
+      <div>{{ cat_tag(a.category) }}</div>
+      <h3 class="mt-1 font-bold leading-snug {{ 'text-2xl sm:text-3xl' if large else 'text-lg' }}"><span class="headline-link">{{ a.title }}</span></h3>
+      {%- if large %}<p class="mt-2 line-clamp-3 text-muted">{{ a.description }}</p>{% endif %}
+      {{ meta(a, cls='mt-2') }}
+    </div>
+  </a>
+  {{ bookmark_btn(a._id, overlay=large, cls='absolute right-3 top-3' if large else 'absolute bottom-0 right-0') }}
+</article>
+{%- endmacro %}
+
+{# 6 — Search result card (query terms highlighted server-side) #}
+{% macro highlight(text, terms) -%}
+{%- if not terms %}{{ text }}{% else %}{{ text|highlight_terms(terms) }}{% endif -%}
+{%- endmacro %}
+
+{% macro search_result_card(a, index=0, terms=[]) -%}
+<article class="group relative reveal border-b border-line py-6 first:pt-0" style="--i:{{ index }}">
+  <a href="/article/{{ a._id }}" class="flex gap-4 sm:gap-6">
+    <div class="min-w-0 flex-1 pr-8">
+      <div class="flex flex-wrap items-center gap-2 text-xs text-muted"><span class="font-semibold text-ink/80">{{ a.source }}</span>·<span>{{ a.publishedAt|time_ago }}</span></div>
+      <h3 class="mt-1.5 text-xl font-bold leading-snug sm:text-2xl"><span class="headline-link">{{ highlight(a.title, terms) }}</span></h3>
+      <p class="mt-2 line-clamp-2 text-sm text-muted sm:text-base">{{ highlight(a.description, terms) }}</p>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        {{ cat_tag(a.category) }}
+        {%- for t in (a.tags or [])[:3] %}<span class="rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">#{{ t }}</span>{% endfor %}
+        <span class="inline-flex items-center gap-1 text-xs text-muted">{{ icon('Clock', 'h-3 w-3') }}{{ a.readingTime }} min</span>
+      </div>
+    </div>
+    <div class="w-28 shrink-0 overflow-hidden rounded-[3px] sm:w-52">{{ smart_image(a.image, '', 'aspect-[4/3]') }}</div>
+  </a>
+  {{ bookmark_btn(a._id, cls='absolute bottom-5 right-0 sm:right-auto sm:bottom-5 sm:left-[calc(100%-13rem)]') }}
+</article>
+{%- endmacro %}

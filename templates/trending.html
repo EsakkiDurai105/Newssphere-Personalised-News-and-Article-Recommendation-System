@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import smart_image, cat_tag, meta, bookmark_btn with context %}
+{% from 'components/misc.html' import page_header, empty_state with context %}
+{% block content %}
+{% call page_header('Trending', kicker='Right now', subtitle='Ranked by reads, likes and freshness — the stories everyone is talking about.') %}
+<div class="mt-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">{{ icon('Flame', 'h-3.5 w-3.5') }} Refreshed every minute</div>
+{% endcall %}
+<div class="container-x max-w-4xl py-10">
+  {%- if not articles %}
+  {{ empty_state('Nothing is trending yet', 'Read and like a few stories to get things moving.') }}
+  {%- else %}
+  <ol class="space-y-2">
+    {%- for a in articles %}
+    {%- set i = loop.index0 %}
+    <li class="group reveal relative border-b border-line" style="--i:{{ [i, 5]|min }}">
+      <a href="/article/{{ a._id }}" class="flex items-center gap-4 py-5 sm:gap-6">
+        <span class="w-12 shrink-0 text-center font-display font-black leading-none sm:w-20 {{ 'text-5xl text-accent sm:text-7xl' if i < 3 else 'text-4xl text-ink/25 sm:text-5xl' }}">{{ loop.index }}</span>
+        <div class="min-w-0 flex-1 pr-8">
+          {{ cat_tag(a.category) }}
+          <h3 class="mt-1 text-lg font-bold leading-snug sm:text-2xl"><span class="headline-link">{{ a.title }}</span></h3>
+          {{ meta(a, cls='mt-2') }}
+          <div class="mt-2 flex items-center gap-4 text-xs text-muted">
+            <span class="inline-flex items-center gap-1">{{ icon('Eye', 'h-3.5 w-3.5') }} {{ a.views|compact }}</span>
+            <span class="inline-flex items-center gap-1">{{ icon('Heart', 'h-3.5 w-3.5') }} {{ a.likes|compact }}</span>
+          </div>
+        </div>
+        <div class="hidden w-40 shrink-0 overflow-hidden rounded-[3px] sm:block">{{ smart_image(a.image, '', 'aspect-[4/3]') }}</div>
+      </a>
+      {{ bookmark_btn(a._id, cls='absolute right-0 top-4 sm:right-44') }}
+    </li>
+    {%- endfor %}
+  </ol>
+  {%- endif %}
+</div>
+{% endblock %}

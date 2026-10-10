@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% macro sidebar() %}
+<div class="flex h-full flex-col bg-[#0d0e11] text-neutral-300">
+  <div class="flex h-16 items-center gap-3 border-b border-white/10 px-5">
+    <span class="grid h-8 w-8 place-items-center rounded-[5px] bg-accent text-sm font-black text-white">N</span>
+    <div class="leading-tight">
+      <div class="text-sm font-bold text-white">NewsSphere</div>
+      <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Newsroom Admin</div>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-1 p-3">
+    {%- for to, label, ic, end in [('/admin', 'Overview', 'LayoutDashboard', true), ('/admin/articles', 'Articles', 'FileText', false), ('/admin/users', 'Users', 'Users', false)] %}
+    {%- set active = (path == to) if end else (path == to or path.startswith(to ~ '/')) %}
+    <a href="{{ to }}" class="flex items-center gap-3 rounded-[5px] px-3 py-2.5 text-sm font-medium transition {{ 'bg-accent text-white' if active else 'hover:bg-white/5 hover:text-white' }}">{{ icon(ic, 'h-4 w-4') }}{{ label }}</a>
+    {%- endfor %}
+  </nav>
+  <div class="space-y-1 border-t border-white/10 p-3">
+    <a href="/" class="flex items-center gap-3 rounded-[5px] px-3 py-2.5 text-sm hover:bg-white/5 hover:text-white">{{ icon('ExternalLink', 'h-4 w-4') }} View live site</a>
+    <button type="button" data-logout class="flex w-full items-center gap-3 rounded-[5px] px-3 py-2.5 text-sm hover:bg-white/5 hover:text-white">{{ icon('LogOut', 'h-4 w-4') }} Sign out</button>
+  </div>
+</div>
+{% endmacro %}
+
+{% block body %}
+<div class="min-h-screen bg-soft">
+  <aside class="fixed inset-y-0 left-0 z-30 hidden w-60 lg:block">{{ sidebar() }}</aside>
+  <div data-admin-drawer hidden class="fixed inset-0 z-40 lg:hidden">
+    <div class="absolute inset-0 bg-black/60" data-admin-drawer-close></div>
+    <div class="absolute inset-y-0 left-0 w-64">{{ sidebar() }}</div>
+  </div>
+  <div class="lg:pl-60">
+    <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-paper/90 px-4 backdrop-blur sm:px-8">
+      <button class="grid h-10 w-10 place-items-center rounded-full hover:bg-soft lg:hidden" data-admin-drawer-toggle aria-label="Toggle sidebar">{{ icon('Menu', 'h-5 w-5') }}</button>
+      <div class="hidden text-sm text-muted lg:block">Signed in as <span class="font-semibold text-ink">{{ user.name }}</span></div>
+      <button type="button" data-theme-toggle class="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label="Toggle theme"><span class="icon-moon dark:hidden">{{ icon('Moon', 'h-5 w-5') }}</span><span class="icon-sun hidden dark:inline-flex">{{ icon('Sun', 'h-5 w-5') }}</span></button>
+    </header>
+    <main class="page-enter px-4 py-8 sm:px-8">{% block admin %}{% endblock %}</main>
+  </div>
+</div>
+{% endblock %}

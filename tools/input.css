@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: 255 255 255;
+  --soft: 246 244 240;
+  --ink: 18 18 20;
+  --muted: 104 104 112;
+  --line: 224 221 214;
+  --accent: 179 18 31;
+}
+.dark {
+  --paper: 14 15 17;
+  --soft: 23 24 27;
+  --ink: 240 238 233;
+  --muted: 160 160 170;
+  --line: 44 45 50;
+  --accent: 240 84 84;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+  }
+  ::selection {
+    background: rgb(var(--accent) / 0.2);
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+  }
+  .kicker {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-accent;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-line text-ink hover:bg-soft;
+  }
+  .input {
+    @apply w-full rounded-sm border border-line bg-paper px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .rule-thick {
+    @apply border-t-[3px] border-ink;
+  }
+  .headline-link {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.35s ease;
+  }
+  .group:hover .headline-link {
+    background-size: 100% 1px;
+  }
+  .shimmer {
+    @apply relative overflow-hidden bg-line/60;
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(var(--paper) / 0.55), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .prose-article p {
+    @apply mb-6 font-serif text-[1.15rem] leading-[1.85] text-ink/90;
+  }
+  .prose-article p:first-of-type::first-letter {
+    @apply float-left mr-3 mt-1 font-display text-[4.2rem] font-bold leading-[0.8] text-accent;
+  }
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ======================================================================
+   Flask port additions – CSS/JS replacements for the Framer Motion effects
+   ====================================================================== */
+[hidden] { display: none !important; }
+
+/* page + element entrance animations (framer-motion initial/animate) */
+@keyframes nsFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes nsPage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes nsFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nsSlideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: none; } }
+@keyframes nsPop { from { opacity: 0; transform: translateY(16px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes nsMenu { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes nsToastIn { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes nsToastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(12px); } }
+@keyframes nsBounce { 0% { transform: scale(.4) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.18) rotate(4deg); opacity: 1; } 100% { transform: none; } }
+@keyframes nsBurst { from { transform: scale(.6); opacity: .7; } to { transform: scale(2.4); opacity: 0; } }
+@keyframes nsSpinIn { from { transform: rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.fade-up { animation: nsFadeUp .5s cubic-bezier(.22, 1, .36, 1) both; }
+.page-enter { animation: nsPage .35s cubic-bezier(.22, 1, .36, 1) both; }
+.fade-in { animation: nsFade .2s ease both; }
+.slide-down { animation: nsSlideDown .25s cubic-bezier(.22, 1, .36, 1) both; }
+.pop-in { animation: nsPop .3s cubic-bezier(.34, 1.4, .64, 1) both; }
+.menu-pop { animation: nsMenu .15s ease both; transform-origin: top right; }
+.toast-in { animation: nsToastIn .25s ease both; }
+.toast-out { animation: nsToastOut .18s ease both; }
+.pop { animation: nsBounce .38s cubic-bezier(.34, 1.56, .64, 1) both; }
+.like-burst { animation: nsBurst .55s ease-out both; }
+.spin-in { animation: nsSpinIn .18s ease both; }
+
+/* scroll reveal (framer-motion whileInView) – only hidden when JS is running */
+html.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .45s ease, transform .45s cubic-bezier(.22, 1, .36, 1); transition-delay: calc(min(var(--i, 0), 5) * 60ms); }
+html.js .reveal-x { transform: translateX(40px); }
+html.js .reveal-x2 { transform: translateX(16px); }
+html.js .reveal.is-in { opacity: 1; transform: none; }
+
+/* image fade-in (SmartImage) */
+html.js img[data-smart] { opacity: 0; }
+html.js img[data-smart].is-loaded { opacity: 1; }
+
+/* sticky header shadow once scrolled */
+#site-header.is-scrolled { box-shadow: 0 6px 24px -12px rgba(0, 0, 0, .25); }
+
+/* mobile drawer slide-in */
+.drawer { transform: translateX(-100%); visibility: hidden; transition: transform .28s cubic-bezier(.22, 1, .36, 1), visibility 0s linear .28s; }
+.drawer.is-open { transform: none; visibility: visible; transition-delay: 0s; }
+
+/* active nav underline grows in (replaces framer layoutId) */
+.nav-underline { transform-origin: left; animation: nsUnderline .3s ease both; }
+@keyframes nsUnderline { from { transform: scaleX(0); } to { transform: scaleX(1); } }

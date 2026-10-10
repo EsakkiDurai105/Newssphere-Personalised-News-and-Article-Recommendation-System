@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import featured_card, story_card, horizontal_card with context %}
+{% from 'components/misc.html' import page_header, empty_state, load_more with context %}
+{% block content %}
+{% call page_header(cat.label, kicker='Section', subtitle=cat.blurb) %}
+<div class="mt-6 flex flex-wrap items-center gap-2">
+  {%- for s, label in [('latest', 'Latest'), ('popular', 'Most popular')] %}
+  <a href="/category/{{ cat.slug }}?sort={{ s }}" class="rounded-full border px-4 py-1.5 text-sm font-semibold capitalize transition {{ 'border-ink bg-ink text-paper' if sort == s else 'border-line hover:bg-soft' }}">{{ label }}</a>
+  {%- endfor %}
+  {%- if data.total > 0 %}<span class="ml-2 text-sm text-muted">{{ data.total }} stories</span>{% endif %}
+</div>
+{% endcall %}
+
+<div class="container-x py-10">
+  {%- set items = data.articles %}
+  {%- if not items %}
+  {{ empty_state('No articles found', "We haven't published any " ~ cat.label ~ " stories yet.", icon_name='SearchX', action_to='/latest', action_label='See latest news') }}
+  {%- else %}
+  <div class="grid gap-8 lg:grid-cols-12">
+    {{ featured_card(items[0], cls='lg:col-span-8') }}
+    <div class="space-y-6 lg:col-span-4">
+      {%- for a in items[1:3] %}{{ story_card(a, index=loop.index0) }}{% endfor %}
+    </div>
+  </div>
+  {%- if items[3:] or data.hasMore %}
+  <div class="rule-thick mb-6 mt-14 pt-3"><span class="kicker">More in {{ cat.label }}</span></div>
+  <div id="list" class="grid gap-x-8 gap-y-6 lg:grid-cols-2">
+    {%- for a in items[3:] %}{{ horizontal_card(a, index=loop.index0 % 6, description=false) }}{% endfor %}
+  </div>
+  {%- endif %}
+  {{ load_more(data.hasMore, '/category/' ~ cat.slug ~ '?partial=1&limit=9&sort=' ~ sort ~ '&page=2', items|length, data.total, '#list') }}
+  {%- endif %}
+
+  <div class="mt-16 flex flex-wrap gap-2 border-t border-line pt-6">
+    <span class="mr-2 self-center text-sm font-semibold text-muted">Other sections:</span>
+    {%- for c in categories if c.slug != cat.slug %}
+    <a href="/category/{{ c.slug }}" class="rounded-full border border-line px-3 py-1 text-sm hover:border-accent hover:text-accent">{{ c.label }}</a>
+    {%- endfor %}
+  </div>
+</div>
+{% endblock %}

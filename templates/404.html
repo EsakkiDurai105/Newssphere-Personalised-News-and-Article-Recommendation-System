@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-x py-24 text-center">
+  {%- if server_error %}
+  <div class="font-display text-[9rem] font-black leading-none text-accent/90 sm:text-[12rem]">500</div>
+  <h1 class="mt-2 text-3xl font-black sm:text-5xl">The presses jammed for a moment.</h1>
+  <p class="mx-auto mt-4 max-w-md text-muted">Something went wrong on our side. Please try again in a moment.</p>
+  {%- else %}
+  <div class="font-display text-[9rem] font-black leading-none text-accent/90 sm:text-[12rem]">404</div>
+  <h1 class="mt-2 text-3xl font-black sm:text-5xl">This page has gone to press elsewhere.</h1>
+  <p class="mx-auto mt-4 max-w-md text-muted">The page you are looking for doesn't exist or has moved. Try the front page, or search for the story you want.</p>
+  {%- endif %}
+  <div class="mt-8 flex justify-center gap-3">
+    <a href="/" class="btn-primary">Front page</a>
+    <a href="/search" class="btn-ghost">Search</a>
+  </div>
+</div>
+{% endblock %}

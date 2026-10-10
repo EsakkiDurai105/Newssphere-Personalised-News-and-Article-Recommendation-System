@@ -1,0 +1,22 @@
+{% macro newsletter() -%}
+<section class="bg-accent text-white">
+  <div class="container-x grid items-center gap-8 py-14 md:grid-cols-2">
+    <div>
+      <div class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">{{ icon('Mail', 'h-4 w-4') }} The Morning Briefing</div>
+      <h2 class="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl">The day's essential stories, in five minutes.</h2>
+      <p class="mt-3 max-w-md text-white/85">One email each morning with the stories that matter, picked by editors and refined by what readers like you actually read.</p>
+    </div>
+    <div data-newsletter>
+      <div data-nl-done hidden class="fade-up flex items-center gap-3 rounded-sm bg-white/15 p-5 text-lg font-semibold">{{ icon('CheckCircle2', 'h-6 w-6 shrink-0') }} <span data-nl-msg></span></div>
+      <form data-nl-form class="flex flex-col gap-3 sm:flex-row" novalidate>
+        <input type="email" required name="email" placeholder="you@example.com" aria-label="Email address" class="h-12 flex-1 rounded-sm border-0 bg-white px-4 text-ink outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-black/40" />
+        <button class="inline-flex h-12 items-center justify-center gap-2 rounded-sm bg-black px-7 text-sm font-bold text-white transition hover:bg-neutral-800 disabled:opacity-70" data-nl-btn>
+          <span data-nl-spin hidden>{{ icon('Loader2', 'h-4 w-4 animate-spin') }}</span>Subscribe
+        </button>
+      </form>
+      <p data-nl-err hidden class="mt-2 text-sm font-medium text-white"></p>
+      <p class="mt-3 text-xs text-white/70">No spam. Unsubscribe anytime.</p>
+    </div>
+  </div>
+</section>
+{%- endmacro %}

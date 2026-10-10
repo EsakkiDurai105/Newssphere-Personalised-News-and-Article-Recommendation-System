@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from 'components/misc.html' import page_header with context %}
+{% block content %}
+{{ page_header('All Sections', kicker='Browse', subtitle='Eleven beats, one front page. Jump straight to the topics you care about.') }}
+<div class="container-x grid gap-px py-10 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for c in categories %}
+  {%- set tint = tints[loop.index0] %}
+  <div class="reveal" style="--i:{{ loop.index0 % 3 }}">
+    <a href="/category/{{ c.slug }}" class="group relative block overflow-hidden border border-line p-7 transition hover:shadow-lg">
+      <span aria-hidden="true" class="absolute inset-x-0 top-0 h-1 origin-left scale-x-[0.18] transition-transform duration-500 group-hover:scale-x-100" style="background: {{ tint }}"></span>
+      <div class="font-display text-6xl font-black leading-none text-ink/10 transition-colors group-hover:text-ink/20">{{ '%02d'|format(loop.index) }}</div>
+      <h2 class="mt-4 text-3xl font-extrabold">{{ c.label }}</h2>
+      <p class="mt-2 min-h-[3rem] text-muted">{{ c.blurb }}</p>
+      <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold" style="color: {{ tint }}">Read {{ c.label }} {{ icon('ArrowUpRight', 'h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5') }}</span>
+    </a>
+  </div>
+  {%- endfor %}
+</div>
+{% endblock %}

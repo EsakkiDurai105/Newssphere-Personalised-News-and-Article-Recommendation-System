@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from 'components/cards.html' import story_card with context %}
+{% from 'components/misc.html' import page_header, empty_state, load_more with context %}
+{% block content %}
+{{ page_header('Saved Articles', kicker='Your library', subtitle="Stories you've bookmarked to read later. Saved stories also help tune your recommendations.") }}
+<div class="container-x py-10">
+  {%- if not data.articles %}
+  {{ empty_state('No bookmarks yet', 'Tap the bookmark icon on any story to save it here.', icon_name='Bookmark', action_to='/latest', action_label='Browse latest news') }}
+  {%- else %}
+  <div id="list" data-removable class="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+    {%- for a in data.articles %}{{ story_card(a, index=loop.index0 % 6) }}{% endfor %}
+  </div>
+  {{ load_more(data.hasMore, '/bookmarks?partial=1&limit=12&page=2', data.articles|length, data.total, '#list') }}
+  {%- endif %}
+</div>
+{% endblock %}
