@@ -18,10 +18,12 @@ SUBSCRIBERS = "subscribers"
 
 def init_db(uri=None, client=None):
     """Connect to MongoDB Atlas (or use an injected client – used by the test-suite)."""
+    if _state["client"] is not None and client is None:
+        return _state["db"]
     if client is None:
         if not uri:
             raise RuntimeError(
-                "MONGODB_URI is not set. Copy .env.example to .env and paste your MongoDB Atlas connection string."
+                "MONGODB_URI is not set. Set MONGODB_URI in your .env or Vercel Environment Variables."
             )
         client = MongoClient(uri, serverSelectionTimeoutMS=15000, appname="newssphere-flask")
         client.admin.command("ping")  # fail fast with a clear error if Atlas is unreachable
