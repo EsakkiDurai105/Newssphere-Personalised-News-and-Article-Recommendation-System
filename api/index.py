@@ -116,3 +116,6 @@ except Exception as exc:
             ),
             500,
         )
+
+handler = app
+
